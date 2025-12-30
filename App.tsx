@@ -1,13 +1,23 @@
-import { ScreenContent } from 'components/ScreenContent';
+import { ScreenContent } from '@/components/ScreenContent';
 import { StatusBar } from 'expo-status-bar';
+import FontLoader from '@/hooks/FontLoader';
+import { AuthProvider } from '@/context/AuthProvider';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import RootNavigation from '@/navigations/RootNavigation';
 
 import './global.css';
 
 export default function App() {
   return (
-    <>
-      <ScreenContent title="Home" path="App.tsx"></ScreenContent>
-      <StatusBar style="auto" />
-    </>
+    <FontLoader>
+      <NavigationContainer>
+        <AuthProvider>
+          <GestureHandlerRootView>
+             <RootNavigation/>
+          </GestureHandlerRootView>
+        </AuthProvider>
+      </NavigationContainer>
+    </FontLoader>
   );
 }
