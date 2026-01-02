@@ -4,7 +4,19 @@ module.exports = {
 
   presets: [require('nativewind/preset')],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        "oswald-bold": ["Oswald-Bold"],
+        "oswald-extraLight": ["Oswald-ExtraLight"],
+        "oswald-light": [ "Oswald-Light"],
+        "oswald-medium": ["Oswald-Medium"],
+        "oswald-regular": ["Oswald-Regular"],
+        "oswald-semiBold": ["Oswald-SemiBold"]
+      }
+
+
+      
+    },
   },
   plugins: [],
 };

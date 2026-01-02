@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthProvider';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import RootNavigation from '@/navigations/RootNavigation';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
 
@@ -12,11 +13,13 @@ export default function App() {
   return (
     <FontLoader>
       <NavigationContainer>
-        <AuthProvider>
-          <GestureHandlerRootView>
-             <RootNavigation/>
-          </GestureHandlerRootView>
-        </AuthProvider>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <GestureHandlerRootView>
+              <RootNavigation/>
+            </GestureHandlerRootView>
+          </AuthProvider>
+        </SafeAreaProvider>
       </NavigationContainer>
     </FontLoader>
   );
