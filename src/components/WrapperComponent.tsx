@@ -37,7 +37,7 @@ const WrapperComponent = ({
                     />
                 </View>
             }
-            <View className={`h-full px-6 py-8 ${container_bg}`}>
+            <View className={`flex-1 px-6 py-1 ${container_bg}`}>
                 {children}
 
                 <View className="">

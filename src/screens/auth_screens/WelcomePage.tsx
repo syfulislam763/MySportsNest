@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Image, ScrollView } from 'react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import ButtonPrimary from '@/components/ButtonPrimary';
 import { useNavigation } from '@react-navigation/native';
+
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
 
@@ -45,7 +46,7 @@ const WelcomePage = () => {
                         bgColor=''
                         borderColor='border-[#7ac7ea]'
                         titleColor='text-[#7ac7ea]'
-                        onPress={() => null}
+                        onPress={() => navigation.navigate("SignUpScreen")}
                     />
 
 
