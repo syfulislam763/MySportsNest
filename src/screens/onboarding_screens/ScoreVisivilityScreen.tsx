@@ -21,7 +21,9 @@ const ScoreVisibilityScreen = () => {
             const timeout = setTimeout(() => {
     
                 setOpenModal(false);
+                navigation.navigate("NestFeedScreen")
                 clearTimeout(timeout);
+
             }, 2000)
         }
     

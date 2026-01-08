@@ -8,10 +8,11 @@ export type AuthStackPramList = {
         isForgotPasswordPage: boolean;
     },
     ForgotPasswordScreen: undefined,
-    CreateNewPasswordScreen: undefined
+    CreateNewPasswordScreen: undefined,
 }
 
 export type MainStackParamList = {
     WelcomeMyNestScreen: undefined,
     ScoreVisibilityScreen: undefined,
+    NestFeedScreen: undefined
 }
