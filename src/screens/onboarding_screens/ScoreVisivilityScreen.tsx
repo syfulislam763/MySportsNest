@@ -36,12 +36,14 @@ const ScoreVisibilityScreen = () => {
                 title={""}
                 bg_color={"bg-[#5e5e5e]"}
                 container_bg={"bg-[#5e5e5e]"}
-                headerComponent={() => <Text></Text>}
-            >
-                <View className="flex-1">
+                headerComponent={() => <View className='mx-6'>
                     <Text className="text-white text-2xl font-oswald-medium mb-2">Score Visibility</Text>
                     <Text className="text-white/70 text-sm font-oswald-regular mb-6">Choose if you want live scores to appear in your Nest feed</Text>
 
+                </View>}
+            >
+                <View className="flex-1">
+                    
                     <View className="bg-[#4a4a4a] rounded-2xl p-5 mb-6">
                         <View className="flex-row items-center justify-between mb-2">
                             <Text className="text-white text-base font-oswald-medium">Show Live Scores</Text>

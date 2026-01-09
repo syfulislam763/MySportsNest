@@ -44,13 +44,11 @@ const WelcomeMyNestScreen = () => {
 
     return (
         <View className='flex-1'>
-            <WrapperComponent
+        <WrapperComponent
             title={""}
             bg_color={"bg-[#5e5e5e]"}
             container_bg={"bg-[#5e5e5e]"}
-            headerComponent={() => <Text></Text>}
-        >
-            <View className="flex-1">
+            headerComponent={() => <View className='mx-6'>
                 <Text className="text-white text-xl font-oswald-medium mb-2">Welcome to MySportsNest!</Text>
                 <Text className="text-white/70 text-sm font-oswald-regular mb-6">Build your Nest by searching and adding your favorite teams, athletes, leagues</Text>
 
@@ -66,6 +64,11 @@ const WelcomeMyNestScreen = () => {
                         <Search size={24} color="#5e5e5e" />
                     </View>
                 </View>
+
+            </View>}
+        >
+            <View className="flex-1">
+                
 
                 <View className="flex-row justify-between mb-6">
                     <TouchableOpacity 
