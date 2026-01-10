@@ -1,6 +1,6 @@
 import React, {useState, useRef, useEffect} from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, Image, Animated, PanResponder, Dimensions, Modal, ScrollView } from 'react-native';
-import { Search, Calendar, ChevronDown, SlidersHorizontal, Heart, Bookmark, MoreVertical, Plus } from 'lucide-react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions } from 'react-native';
+import { Search, ChevronDown, SlidersHorizontal, Heart, Bookmark, MoreVertical, Plus } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import NestMenu from '@/components/NestMenu';
 import LiveBar from '@/components/LiveBar';
@@ -195,7 +195,11 @@ const NestFeedScreen = () => {
                     <Image source={nest} className="w-full h-full" style={{objectFit: 'cover'}} />
                 </TouchableOpacity>
    
-                <NestMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen}/>
+                <NestMenu 
+                    menuOpen={menuOpen} 
+                    setMenuOpen={setMenuOpen}
+                    buttonPosition={{ x: width / 2, y: height - 100 }}
+                />
             </WrapperComponent>
             
             <LiveBar/>

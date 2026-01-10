@@ -1,15 +1,16 @@
 import React, {useState, useRef, useEffect} from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, Animated,  } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const LiveBar = () => {
     const scrollX = useRef(new Animated.Value(0)).current;
     const [isPaused, setIsPaused] = useState(false);
-    const insets = useSafeAreaInsets()
-    const barcelona = require("../../assets/img/barcelona.png")
-    const madrid = require("../../assets/img/madrid.png")
+    const currentAnimation = useRef<Animated.CompositeAnimation | null>(null);
+    const insets = useSafeAreaInsets();
+    const barcelona = require("../../assets/img/barcelona.png");
+    const madrid = require("../../assets/img/madrid.png");
 
     const liveScores = [
         { id: '1', team1: 'MAN UTD', score: '2 - 1', team2: 'CHE', icon1: barcelona, icon2: madrid },
@@ -17,26 +18,48 @@ const LiveBar = () => {
         { id: '3', team1: 'BOS', score: '3 - 2', team2: 'NYK', icon1: barcelona, icon2: madrid },
     ];
 
-    useEffect(() => {
-        if (liveScores.length <= 1 || isPaused) return;
+    useFocusEffect(
+        useCallback(() => {
+            if (liveScores.length <= 1) return;
 
-       
-        const itemWidth = 180;
-        const totalWidth = itemWidth * liveScores.length;
-        console.log(liveScores.length * 3000, scrollX)
-        const animation = Animated.loop(
-            Animated.timing(scrollX, {
-                toValue: -totalWidth,
-                duration: liveScores.length * 3000,
-                useNativeDriver: true,
-            })
-        );
+            const itemWidth = 180;
+            const totalWidth = itemWidth * liveScores.length;
 
-        animation.start();
+            const startAnimation = () => {
+                const currentValue = (scrollX as any)._value;
+                const remainingDistance = -totalWidth - currentValue;
+                const speed = totalWidth / (liveScores.length * 3000);
+                const duration = Math.abs(remainingDistance / speed  + 1000);
 
-        return () => animation.stop();
-    }, [isPaused, liveScores.length]);
+                currentAnimation.current = Animated.loop(
+                    Animated.sequence([
+                        Animated.timing(scrollX, {
+                            toValue: -totalWidth,
+                            duration: duration,
+                            useNativeDriver: true,
+                        }),
+                        Animated.timing(scrollX, {
+                            toValue: 0,
+                            duration: 0,
+                            useNativeDriver: true,
+                        }),
+                    ])
+                );
 
+                currentAnimation.current.start();
+            };
+
+            if (!isPaused) {
+                startAnimation();
+            }
+
+            return () => {
+                if (currentAnimation.current) {
+                    currentAnimation.current.stop();
+                }
+            };
+        }, [isPaused, liveScores.length])
+    );
 
     return (
         <TouchableOpacity 
