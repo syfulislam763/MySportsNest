@@ -90,6 +90,8 @@ const LiveBar = () => {
                                 <Image source={score.icon1} className="w-6 h-6 rounded-full mr-2" style={{resizeMode: 'cover'}} />
                                 <Text className="text-white text-sm font-oswald-bold">{score.team1} {score.score} {score.team2}</Text>
                                 <Image source={score.icon2} className="w-6 h-6 rounded-full ml-2" style={{resizeMode: 'cover'}} />
+
+                                <View className='h-6 w-[1px] bg-white ml-4'/>
                             </View>
                         ))}
                     </Animated.View>
