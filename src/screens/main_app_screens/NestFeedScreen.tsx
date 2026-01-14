@@ -4,21 +4,10 @@ import { Search, ChevronDown, SlidersHorizontal, Heart, Bookmark, MoreVertical, 
 import WrapperComponent from '@/components/WrapperComponent';
 import NestMenu from '@/components/NestMenu';
 import LiveBar from '@/components/LiveBar';
+import { posts } from '@/utils/dummy_data';
+import { Post } from '@/utils/main_app_types';
 
 const { width, height } = Dimensions.get('window');
-
-type Post = {
-    id: string;
-    user: string;
-    handle: string;
-    timestamp: string;
-    source: string;
-    title: string;
-    description: string;
-    image: any;
-    likes: number;
-    avatar: any;
-}
 
 const NestFeedScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -35,44 +24,7 @@ const NestFeedScreen = () => {
     const sortOptions = ['Latest', 'Oldest', 'Most Liked', 'Least Liked'];
     const filterOptions = ['Teams', 'Athletes', 'Leagues', 'News', 'Videos', 'Articles'];
 
-    const posts: Post[] = [
-        {
-            id: '1',
-            user: 'Manchester',
-            handle: '@team',
-            timestamp: '24 Nov 2025, 10:45 AM',
-            source: 'via YouTube',
-            title: 'Exclusive interview with Manchester United about future plans',
-            description: 'Latest updates and analysis from trusted sports sources covering the biggest...',
-            image: require("../../../assets/temp/test4.jpg"),
-            likes: 764,
-            avatar: require("../../../assets/temp/test_p1.jpg")
-        },
-        {
-            id: '2',
-            user: 'LeBron James',
-            handle: '@team',
-            timestamp: '24 Nov 2025, 10:45 AM',
-            source: 'via The Athletic',
-            title: 'Exclusive interview with Manchester United about future plans',
-            description: 'Latest updates and analysis from trusted sports sources covering the biggest...',
-            image: require("../../../assets/temp/test3.jpg"),
-            likes: 895,
-            avatar: require("../../../assets/temp/test_p2.jpg")
-        },
-        {
-            id: '3',
-            user: 'Manchester',
-            handle: '@Athlete',
-            timestamp: '24 Nov 2025, 10:45 AM',
-            source: 'via The Athletic',
-            title: "Analysis: What's next for Tom Brady?",
-            description: 'Latest updates and analysis from trusted sports sources covering the biggest...',
-            image: require("../../../assets/temp/test.jpg"),
-            likes: 895,
-            avatar: require("../../../assets/temp/test_p1.jpg")
-        }
-    ];
+    
 
     const toggleFilter = (filter: string) => {
         if (selectedFilters.includes(filter)) {

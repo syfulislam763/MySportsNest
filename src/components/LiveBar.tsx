@@ -27,7 +27,7 @@ const LiveBar = () => {
 
             const startAnimation = () => {
                 const currentValue = (scrollX as any)._value;
-                const remainingDistance = -totalWidth - currentValue;
+                const remainingDistance = totalWidth - currentValue;
                 const speed = totalWidth / (liveScores.length * 3000);
                 const duration = Math.abs(remainingDistance / speed  + 1000);
 

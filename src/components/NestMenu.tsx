@@ -3,6 +3,13 @@ import { StyleSheet, View, TouchableOpacity, Image, Text, Animated, Dimensions, 
 import { BlurView } from 'expo-blur';
 import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MainStackParamList } from '@/navigations/types';
+import { useNavigation } from '@react-navigation/native';
+import AddToNestModal from './AddToNestModal';
+
+
+type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 
 const { width, height } = Dimensions.get('window');
 
@@ -23,6 +30,9 @@ const NestMenu: React.FC<NestMenuProps> = ({ menuOpen, setMenuOpen, buttonPositi
     const [currentOffset, setCurrentOffset] = useState<number>(0);
     const lastAngle = useRef<number>(0);
     const maxVisibleItems: number = 8;
+    const [openAddtoNestModal, setOpenAddToNestModal] = useState<boolean>()
+
+    const navigation = useNavigation<NavigationPropsType>()
 
     // ONLY ADD: Animation states
     const [showMenu, setShowMenu] = useState<boolean>(false);
@@ -34,11 +44,11 @@ const NestMenu: React.FC<NestMenuProps> = ({ menuOpen, setMenuOpen, buttonPositi
     const nest = require("../../assets/img/Nest.png");
 
     const circularItems: CircularItem[] = [
-        { id: '1', name: 'Item 1', image: require("../../assets/img/appIcon.png") },
+        { id: '1', name: 'Item 1', image: require("../../assets/temp/test_p1.jpg") },
         { id: '2', name: 'Item 2', image: require("../../assets/img/appIcon.png") },
-        { id: '3', name: 'Item 3', image: require("../../assets/img/appIcon.png") },
+        { id: '3', name: 'Item 3', image: require("../../assets/temp/test_p2.jpg") },
         { id: '4', name: 'Item 4', image: require("../../assets/img/appIcon.png") },
-        { id: '5', name: 'Item 5', image: require("../../assets/img/appIcon.png") },
+        { id: '5', name: 'Item 5', image: require("../../assets/temp/test.jpg") },
         { id: '6', name: 'Item 6', image: require("../../assets/img/appIcon.png") },
         { id: '7', name: 'Item 7', image: require("../../assets/img/appIcon.png") },
         { id: '8', name: 'Item 8', image: require("../../assets/img/appIcon.png") },
@@ -157,7 +167,7 @@ const NestMenu: React.FC<NestMenuProps> = ({ menuOpen, setMenuOpen, buttonPositi
                             zIndex: 100
                         }}
                     >
-                        <TouchableOpacity className="w-full h-full rounded-full bg-[#ffffff60] items-center justify-center">
+                        <TouchableOpacity onPress={() => setOpenAddToNestModal(true)} className="w-full h-full rounded-full bg-[#ffffff60] items-center justify-center">
                             <Image source={nest360} className="w-full h-full" style={{resizeMode: 'cover'}} />
                         </TouchableOpacity>
                     </View>
@@ -230,7 +240,12 @@ const NestMenu: React.FC<NestMenuProps> = ({ menuOpen, setMenuOpen, buttonPositi
                                     ]
                                 }}
                             >
-                                <TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setMenuOpen(false);
+                                        navigation.navigate("TeamDetailScreen")
+                                    }}
+                                >
                                     <View className="w-[70px] h-[70px] rounded-full bg-white items-center justify-center" style={{
                                         borderWidth: 4,
                                         borderColor: '#7ac7ea',
@@ -249,6 +264,12 @@ const NestMenu: React.FC<NestMenuProps> = ({ menuOpen, setMenuOpen, buttonPositi
 
                 </View>
                 
+
+                {openAddtoNestModal && <AddToNestModal
+                    visible={openAddtoNestModal}
+                    onClose={() => setOpenAddToNestModal(false)}
+                    onConfirm={() => {}}
+                />}
             </TouchableOpacity>
         </Modal>
     );
@@ -306,22 +327,22 @@ export default NestMenu;
 //     const nest360 = require("../../assets/img/nest360.png");
 //     const nest = require("../../assets/img/Nest.png");
 
-//     const circularItems: CircularItem[] = [
-//         { id: '1', name: 'Item 1', image: require("../../assets/temp/test_p1.jpg") },
-//         { id: '2', name: 'Item 2', image: require("../../assets/img/appIcon.png") },
-//         { id: '3', name: 'Item 3', image: require("../../assets/temp/test_p2.jpg") },
-//         { id: '4', name: 'Item 4', image: require("../../assets/img/appIcon.png") },
-//         { id: '5', name: 'Item 5', image: require("../../assets/temp/test.jpg") },
-//         { id: '6', name: 'Item 6', image: require("../../assets/img/appIcon.png") },
-//         { id: '7', name: 'Item 7', image: require("../../assets/img/appIcon.png") },
-//         { id: '8', name: 'Item 8', image: require("../../assets/img/appIcon.png") },
-//         { id: '9', name: 'Item 9', image: require("../../assets/img/appIcon.png") },
-//         { id: '10', name: 'Item 10', image: require("../../assets/img/google.png") },
-//         { id: '11', name: 'Item 11', image: require("../../assets/img/google.png") },
-//         { id: '12', name: 'Item 12', image: require("../../assets/img/google.png") },
-//         { id: '13', name: 'Item 13', image: require("../../assets/img/google.png") },
-//         { id: '14', name: 'Item 14', image: require("../../assets/img/google.png") },
-//     ];
+    // const circularItems: CircularItem[] = [
+    //     { id: '1', name: 'Item 1', image: require("../../assets/temp/test_p1.jpg") },
+    //     { id: '2', name: 'Item 2', image: require("../../assets/img/appIcon.png") },
+    //     { id: '3', name: 'Item 3', image: require("../../assets/temp/test_p2.jpg") },
+    //     { id: '4', name: 'Item 4', image: require("../../assets/img/appIcon.png") },
+    //     { id: '5', name: 'Item 5', image: require("../../assets/temp/test.jpg") },
+    //     { id: '6', name: 'Item 6', image: require("../../assets/img/appIcon.png") },
+    //     { id: '7', name: 'Item 7', image: require("../../assets/img/appIcon.png") },
+    //     { id: '8', name: 'Item 8', image: require("../../assets/img/appIcon.png") },
+    //     { id: '9', name: 'Item 9', image: require("../../assets/img/appIcon.png") },
+    //     { id: '10', name: 'Item 10', image: require("../../assets/img/google.png") },
+    //     { id: '11', name: 'Item 11', image: require("../../assets/img/google.png") },
+    //     { id: '12', name: 'Item 12', image: require("../../assets/img/google.png") },
+    //     { id: '13', name: 'Item 13', image: require("../../assets/img/google.png") },
+    //     { id: '14', name: 'Item 14', image: require("../../assets/img/google.png") },
+    // ];
 
 //     useEffect(() => {
 //         if (menuOpen) {

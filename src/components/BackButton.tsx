@@ -7,7 +7,7 @@ type BackButtonProps = {
     bg_color?: string | null | undefined
 }
 
-const BackButton = ({bg_color="bg-gray-50"}:BackButtonProps) => {
+const BackButton = ({bg_color=""}:BackButtonProps) => {
     const navigtation = useNavigation()
     return (
         <Pressable onPress={()=> navigtation.goBack()} className={`h-10 w-10 justify-center items-center rounded-full ${bg_color}`}>

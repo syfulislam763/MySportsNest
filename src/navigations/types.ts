@@ -14,5 +14,6 @@ export type AuthStackPramList = {
 export type MainStackParamList = {
     WelcomeMyNestScreen: undefined,
     ScoreVisibilityScreen: undefined,
-    NestFeedScreen: undefined
+    NestFeedScreen: undefined,
+    TeamDetailScreen: undefined
 }
