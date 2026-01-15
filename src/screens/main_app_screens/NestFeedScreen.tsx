@@ -6,6 +6,12 @@ import NestMenu from '@/components/NestMenu';
 import LiveBar from '@/components/LiveBar';
 import { posts } from '@/utils/dummy_data';
 import { Post } from '@/utils/main_app_types';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainStackParamList } from '@/navigations/types';
+import { useNavigation } from '@react-navigation/native';
+import WeeklyCalendar from './WeeklyCalendar';
+
+type NavigationProps = StackNavigationProp<MainStackParamList>
 
 const { width, height } = Dimensions.get('window');
 
@@ -17,6 +23,8 @@ const NestFeedScreen = () => {
     const [selectedSort, setSelectedSort] = useState('Latest');
     const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
+    const navigation = useNavigation<NavigationProps>()
+
     const appIcon = require("../../../assets/img/appIcon.png");
     const profilePic = require("../../../assets/temp/test_p1.jpg");
     const nest = require("../../../assets/img/Nest.png");
@@ -24,6 +32,7 @@ const NestFeedScreen = () => {
     const sortOptions = ['Latest', 'Oldest', 'Most Liked', 'Least Liked'];
     const filterOptions = ['Teams', 'Athletes', 'Leagues', 'News', 'Videos', 'Articles'];
 
+    const [activeTab, setActiveTab] = useState<string>("feed")
     
 
     const toggleFilter = (filter: string) => {
@@ -95,105 +104,123 @@ const NestFeedScreen = () => {
                             </View>
                         </View>
 
-                        <Image source={profilePic} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                        <TouchableOpacity onPress={() => navigation.navigate("ProfileSettingsScreen")}>
+                            <Image source={profilePic} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                        </TouchableOpacity>
                 </View>}
             >
-                <View className="pb-3 relative">
-                    <View className="flex-row items-center justify-between ">
-                        <TouchableOpacity className="mr-4">
-                            <Text className="text-[#7ac7ea] text-lg font-oswald-medium">Nest Feed</Text>
-                            <View className="h-1 bg-[#7ac7ea] rounded-full mt-1" />
-                        </TouchableOpacity>
-                        <TouchableOpacity className="mr-4">
-                            <Text className="text-white text-lg font-oswald-medium">Nest Calendar</Text>
-                        </TouchableOpacity>    
-                    </View>
-                    <View className="flex-row items-center justify-start mt-3">
-                        <TouchableOpacity 
-                            className="flex-row items-center mr-3 border border-white/30 rounded-full px-3 py-1"
-                            onPress={() => {
-                                setSortOpen(!sortOpen);
-                                setFilterOpen(false)
-                            }}
-                        >
-                            <Text className="text-white text-sm font-oswald-regular mr-1">Sort</Text>
-                            <ChevronDown size={16} color="white" />
-                        </TouchableOpacity>
 
-                        <TouchableOpacity 
-                            className="flex-row items-center border border-white/30 rounded-full px-3 py-1"
-                            onPress={() => {
-                                setFilterOpen(!filterOpen);
-                                setSortOpen(false);
-                            }}
-                        >
-                            <SlidersHorizontal size={18} color="white" />
-                            <Text className="text-white text-sm font-oswald-regular ml-1">Filter</Text>
-                        </TouchableOpacity>
-                    </View>
 
-                    {sortOpen && (
-                        <View className="absolute top-24 left-0 bg-white/90 rounded-xl p-2 z-50">
-                            {sortOptions.map((option) => (
-                                <TouchableOpacity
-                                    key={option}
-                                    className="py-2 px-4"
-                                    onPress={() => {
-                                        setSelectedSort(option);
-                                        setSortOpen(false);
-                                    }}
-                                >
-                                    <Text className={`text-sm font-oswald-regular ${selectedSort === option ? 'text-[#7ac7ea]' : 'text-[#5e5e5e]'}`}>
-                                        {option}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-
-                    {filterOpen && (
-                        <View className="absolute top-24 left-20 bg-white/90 rounded-xl p-3 z-50" style={{
-                            width: 200,
-                        }}>
-                            <View className="flex-row items-center justify-between mb-2">
-                                <Text className="text-[#5e5e5e] text-base font-oswald-medium">Filters</Text>
-                                <TouchableOpacity onPress={() => setFilterOpen(false)}>
-                                    <X size={20} color="#5e5e5e" />
-                                </TouchableOpacity>
-                            </View>
-                            {filterOptions.map((option) => (
-                                <TouchableOpacity
-                                    key={option}
-                                    className="flex-row items-center py-2"
-                                    onPress={() => toggleFilter(option)}
-                                >
-                                    <View className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${selectedFilters.includes(option) ? 'bg-[#7ac7ea] border-[#7ac7ea]' : 'border-gray-400'}`}>
-                                        {selectedFilters.includes(option) && (
-                                            <View className="w-2 h-2 bg-white rounded-full" />
-                                        )}
-                                    </View>
-                                    <Text className="text-sm font-oswald-regular text-[#5e5e5e]">
-                                        {option}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                            <TouchableOpacity 
-                                className="bg-[#7ac7ea]/70 rounded-full py-2 mt-2"
-                                onPress={() => setFilterOpen(false)}
-                            >
-                                <Text className="text-white text-center text-sm font-oswald-medium">Apply</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                <View className="flex-row items-center justify-between ">
+                    <TouchableOpacity onPress={() => setActiveTab("feed")} className="mr-4">
+                        <Text className={`${activeTab=="feed"?"text-[#7ac7ea]":"text-white"} text-lg font-oswald-medium`}>Nest Feed</Text>
+                        {activeTab == "feed" && <View className="h-1 bg-[#7ac7ea] rounded-full mt-1" />}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setActiveTab("calendar")} className="mr-4">
+                        <Text className={`${activeTab=="calendar"?"text-[#7ac7ea]":"text-white"} text-lg font-oswald-medium`}>Nest Calendar</Text>
+                        {activeTab == "calendar" && <View className="h-1 bg-[#7ac7ea] rounded-full mt-1" />}
+                    </TouchableOpacity>    
                 </View>
 
-                <FlatList
-                    data={posts}
-                    renderItem={renderPost}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
-                />
+
+                {activeTab == "calendar"? <WeeklyCalendar/> :
+                
+                    <View className="pb-3 relative">
+                        
+                        
+                        <View className="flex-row items-center justify-start mt-3">
+                            <TouchableOpacity 
+                                className="flex-row items-center mr-3 border border-white/30 rounded-full px-3 py-1"
+                                onPress={() => {
+                                    setSortOpen(!sortOpen);
+                                    setFilterOpen(false)
+                                }}
+                            >
+                                <Text className="text-white text-sm font-oswald-regular mr-1">Sort</Text>
+                                <ChevronDown size={16} color="white" />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity 
+                                className="flex-row items-center border border-white/30 rounded-full px-3 py-1"
+                                onPress={() => {
+                                    setFilterOpen(!filterOpen);
+                                    setSortOpen(false);
+                                }}
+                            >
+                                <SlidersHorizontal size={18} color="white" />
+                                <Text className="text-white text-sm font-oswald-regular ml-1">Filter</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {sortOpen && (
+                            <View className="absolute top-16 left-0 bg-white/90 rounded-xl p-2 z-50">
+                                {sortOptions.map((option) => (
+                                    <TouchableOpacity
+                                        key={option}
+                                        className="py-2 px-4"
+                                        onPress={() => {
+                                            setSelectedSort(option);
+                                            setSortOpen(false);
+                                        }}
+                                    >
+                                        <Text className={`text-sm font-oswald-regular ${selectedSort === option ? 'text-[#7ac7ea]' : 'text-[#5e5e5e]'}`}>
+                                            {option}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+
+                        {filterOpen && (
+                            <View className="absolute top-16 left-20 bg-white/90 rounded-xl p-3 z-50" style={{
+                                width: 200,
+                            }}>
+                                <View className="flex-row items-center justify-between mb-2">
+                                    <Text className="text-[#5e5e5e] text-base font-oswald-medium">Filters</Text>
+                                    <TouchableOpacity onPress={() => setFilterOpen(false)}>
+                                        <X size={20} color="#5e5e5e" />
+                                    </TouchableOpacity>
+                                </View>
+                                {filterOptions.map((option) => (
+                                    <TouchableOpacity
+                                        key={option}
+                                        className="flex-row items-center py-2"
+                                        onPress={() => toggleFilter(option)}
+                                    >
+                                        <View className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${selectedFilters.includes(option) ? 'bg-[#7ac7ea] border-[#7ac7ea]' : 'border-gray-400'}`}>
+                                            {selectedFilters.includes(option) && (
+                                                <View className="w-2 h-2 bg-white rounded-full" />
+                                            )}
+                                        </View>
+                                        <Text className="text-sm font-oswald-regular text-[#5e5e5e]">
+                                            {option}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                                <TouchableOpacity 
+                                    className="bg-[#7ac7ea]/70 rounded-full py-2 mt-2"
+                                    onPress={() => setFilterOpen(false)}
+                                >
+                                    <Text className="text-white text-center text-sm font-oswald-medium">Apply</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    
+
+                        <FlatList
+                            data={posts}
+                            renderItem={renderPost}
+                            keyExtractor={(item) => item.id}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingTop: 8, paddingBottom: 200 }}
+                        />
+                    </View>
+                    
+                
+                
+                }
+
+                
 
                 <TouchableOpacity 
                     className="absolute bottom-24 w-28 h-28 rounded-full items-center justify-center"

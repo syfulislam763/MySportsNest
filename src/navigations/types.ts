@@ -15,5 +15,12 @@ export type MainStackParamList = {
     WelcomeMyNestScreen: undefined,
     ScoreVisibilityScreen: undefined,
     NestFeedScreen: undefined,
-    TeamDetailScreen: undefined
+    TeamDetailScreen: undefined,
+    ProfileSettingsScreen: undefined,
+    GoAdFreeScreen:undefined,
+    EditProfileScreen: undefined,
+    YourNestSummary: undefined,
+    NotificationSettings: undefined,
+    ChangePassword: undefined,
+    EventDetailsScreen: undefined
 }

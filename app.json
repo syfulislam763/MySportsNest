@@ -9,7 +9,15 @@
     "experiments": {
       "tsconfigPaths": true
     },
-    "plugins": [],
+    
+    "plugins": [ 
+      "expo-font", 
+      "@react-native-google-signin/google-signin", 
+      "expo-av", 
+      [ "expo-audio", { "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone." } ], 
+      [ "expo-image-picker", { "photosPermission": "The app accesses your photos to let you share them with your friends." } ], 
+      [ "expo-video", { "supportsBackgroundPlayback": true, "supportsPictureInPicture": true } ] 
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
