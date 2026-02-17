@@ -86,6 +86,8 @@ const ScoreVisibilityScreen = () => {
             {openModal && <VerificationModal subtitle={`You're all set! Start exploring personalized\ncontent from your favorite sports entities.`} title='Your Nest is Ready!' title_='' visible={openModal} onClose={() => {
                 setOpenModal(false);
             }}/>}
+            
+
         </View>
     );
 }

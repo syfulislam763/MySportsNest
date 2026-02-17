@@ -361,7 +361,7 @@ const TeamDetailScreen = () => {
                             <View className=" mx-2">
                                 <TextInput
                                     className="bg-white rounded-xl px-2 py-3 pr-12 text-sm font-oswald-regular"
-                                    placeholder="Search teams, athletes, leagues..."
+                                    placeholder="Search to add a source for this team/league/athlete"
                                     placeholderTextColor="#a0a0a0"
                                     value={searchQuery}
                                     onChangeText={setSearchQuery}

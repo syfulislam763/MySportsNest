@@ -44,10 +44,12 @@ const NestFeedScreen = () => {
     };
 
     const renderPost = ({ item }: { item: Post }) => (
-        <View className="p-4 mb-4 border-b border-b-white">
+        <View className="py-4 mb-4 border-b border-b-white">
             <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-row items-start flex-1">
-                    <Image source={item.avatar} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                    <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen")}>
+                        <Image source={item.avatar} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                    </TouchableOpacity>
                     <View className="ml-3 flex-1">
                         <View className="flex-row items-center flex-wrap">
                             <Text className="text-white text-lg font-oswald-medium">{item.user}</Text>
@@ -112,13 +114,13 @@ const NestFeedScreen = () => {
 
 
                 <View className="flex-row items-center justify-between ">
-                    <TouchableOpacity onPress={() => setActiveTab("feed")} className="mr-4">
+                    <TouchableOpacity onPress={() => setActiveTab("feed")} className="mr-4 items-center">
                         <Text className={`${activeTab=="feed"?"text-[#7ac7ea]":"text-white"} text-lg font-oswald-medium`}>Nest Feed</Text>
-                        {activeTab == "feed" && <View className="h-1 bg-[#7ac7ea] rounded-full mt-1" />}
+                        {activeTab == "feed" && <View className="h-1 w-32 bg-[#7ac7ea] rounded-full mt-1" />}
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setActiveTab("calendar")} className="mr-4">
+                    <TouchableOpacity onPress={() => setActiveTab("calendar")} className="mr-4 items-center">
                         <Text className={`${activeTab=="calendar"?"text-[#7ac7ea]":"text-white"} text-lg font-oswald-medium`}>Nest Calendar</Text>
-                        {activeTab == "calendar" && <View className="h-1 bg-[#7ac7ea] rounded-full mt-1" />}
+                        {activeTab == "calendar" && <View className="h-1 w-32 bg-[#7ac7ea] rounded-full mt-1" />}
                     </TouchableOpacity>    
                 </View>
 

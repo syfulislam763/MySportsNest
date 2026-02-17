@@ -6,6 +6,8 @@ import ButtonPrimary from '@/components/ButtonPrimary';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
+
+import { toast } from '@/context/useToastStore';
 type NavigationProps = NativeStackNavigationProp<AuthStackPramList>
 
 const appIcon = require("../../../assets/img/appIcon.png");
@@ -17,7 +19,33 @@ const SignUpScreen = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [agreeTerms, setAgreeTerms] = useState(false);
-    const navigation = useNavigation<NavigationProps>()
+    const navigation = useNavigation<NavigationProps>();
+ 
+
+    const handleRegisterUser = () => {
+        if(!name){
+            toast.info("Name is missing", 3000)
+        }else if(!email){
+            toast.info("Email is missing", 3000)
+        }else if(!password){
+            toast.info("Password is missing", 3000)
+        }else if(password.length < 8){
+            toast.info("Password is less than 8 character", 3000)
+        }
+        else {
+            const payload = {
+                name,
+                email,
+                password
+            }
+
+            console.log(payload);
+            //navigation.navigate("OTPVerificationScreen", {isForgotPasswordPage:false})
+
+        }
+    }
+
+    console.log(toast)
 
     return (
         <WrapperComponent
@@ -38,7 +66,7 @@ const SignUpScreen = () => {
 
                     <Text className="text-white text-4xl font-oswald-medium mb-6 mt-5">Sign Up</Text>
 
-                    <View className="mb-6">
+                    {/* <View className="mb-6">
                         <Text className="text-white text-base font-oswald-medium mb-2">Create your username</Text>
                         <Text className="text-white/60 text-xs font-oswald-regular mb-3">Your username must be unique, 3-20 characters Letters and numbers only</Text>
                         <TextInput
@@ -49,7 +77,7 @@ const SignUpScreen = () => {
                             onChangeText={setUsername}
                             autoCapitalize="none"
                         />
-                    </View>
+                    </View> */}
 
                     <View className="mb-6">
                         <Text className="text-white text-base font-oswald-medium mb-4">Name</Text>
@@ -114,7 +142,7 @@ const SignUpScreen = () => {
                         bgColor='bg-[#7ac7ea]'
                         borderColor='border-[#7ac7ea]'
                         titleColor='text-[white]'
-                        onPress={() => navigation.navigate("OTPVerificationScreen", {isForgotPasswordPage:false})}
+                        onPress={() => handleRegisterUser()}
                     />
 
                     <View className='h-6'></View>
@@ -127,6 +155,14 @@ const SignUpScreen = () => {
                     </View>
 
             </ScrollView>
+            {/* <Toast
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                duration={3000}
+                position='bottom'
+                onHide={() => setToast(t => ({...t, visible:false}))}
+            /> */}
         </WrapperComponent>
     );
 }
