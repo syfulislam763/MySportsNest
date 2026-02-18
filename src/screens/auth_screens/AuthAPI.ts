@@ -1,5 +1,6 @@
 import api from "@/constants/Axios";
 import { CHANGE_PASS, DELETE_ACCOUNT, LOGIN, LOGOUT, REFRESH_TOKEN, REGISTER, RESEND_OTP, RESET_PASS_CONFIRM, RESET_PASS_REQ, RESET_PASS_VERIFY, VERIFY_EMAIL } from "@/constants/Path";
+import { toast } from "@/context/useToastStore";
 
 
 type Register = {
@@ -31,8 +32,10 @@ export const register_user = async (payload:Register, cb:(item:any)=>void) => {
     try {
         const res = await api.post(REGISTER, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "register error")
+
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "register error")
+        toast.error("Enter valid data and in password use mix of characters, numbers , and special symbol")
         cb(null);
     }
 }
@@ -40,8 +43,8 @@ export const verify_email = async (payload:VerifyEmail, cb:(item:any)=>void) => 
     try {
         const res = await api.post(VERIFY_EMAIL, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "verify email error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "verify email error")
         cb(null);
     }
 }
@@ -50,8 +53,8 @@ export const login_user = async (payload:Login, cb:(item:any)=>void) => {
     try {
         const res = await api.post(LOGIN, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "login user error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "login user error")
         cb(null);
     }
 }
@@ -59,8 +62,8 @@ export const resend_otp = async (payload:{email: string, purpose:string}, cb:(it
     try {
         const res = await api.post(RESEND_OTP, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "resend otp error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "resend otp error")
         cb(null);
     }
 }
@@ -69,8 +72,8 @@ export const refresh_token = async (payload:{refresh: string}, cb:(item:any)=>vo
     try {
         const res = await api.post(REFRESH_TOKEN, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "refresh token error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "refresh token error")
         cb(null);
     }
 }
@@ -79,8 +82,8 @@ export const reset_pass_request = async (payload:{email:string}, cb:(item:any)=>
     try {
         const res = await api.post(RESET_PASS_REQ, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "reset pass request error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "reset pass request error")
         cb(null);
     }
 }
@@ -89,8 +92,8 @@ export const verify_reset_pass = async (payload:VerifyEmail, cb:(item:any)=>void
     try {
         const res = await api.post(RESET_PASS_VERIFY, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "reset pass verify otp error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "reset pass verify otp error")
         cb(null);
     }
 }
@@ -99,8 +102,8 @@ export const confirm_reset_pass = async (payload:ResetConfirmPass, cb:(item:any)
     try {
         const res = await api.post(RESET_PASS_CONFIRM, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "reset pass confirm error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "reset pass confirm error")
         cb(null);
     }
 }
@@ -109,8 +112,8 @@ export const change_pass = async (payload:ChangePass, cb:(item:any)=>void) => {
     try {
         const res = await api.post(CHANGE_PASS, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "change pass error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "change pass error")
         cb(null);
     }
 }
@@ -119,8 +122,8 @@ export const logout_user = async (payload:{refresh: string}, cb:(item:any)=>void
     try {
         const res = await api.post(LOGOUT, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "logout user error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "logout user error")
         cb(null);
     }
 }
@@ -130,8 +133,8 @@ export const delete_user = async (payload:{confirm: string}, cb:(item:any)=>void
     try {
         const res = await api.post(DELETE_ACCOUNT, payload)
         cb(res.data)
-    }catch(e){
-        console.log(e, "delete user error")
+    }catch(e:any){
+        console.log(JSON.stringify(e?.response, null,  2), "delete user error")
         cb(null);
     }
 }

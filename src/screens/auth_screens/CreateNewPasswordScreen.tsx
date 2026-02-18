@@ -3,12 +3,16 @@ import { StyleSheet, View , Text, TextInput, TouchableOpacity, ScrollView, Image
 import WrapperComponent from '@/components/WrapperComponent';
 import { Eye, EyeOff } from 'lucide-react-native';
 import ButtonPrimary from '@/components/ButtonPrimary';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
 import VerificationModal from '@/components/VarificationModal';
+import { confirm_reset_pass } from './AuthAPI';
+import { toast } from '@/context/useToastStore';
+import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
 
 type NavigationProps = NativeStackNavigationProp<AuthStackPramList>
+type CreateNewPassParamType = RouteProp<AuthStackPramList, "CreateNewPasswordScreen">
 const appIcon = require("../../../assets/img/appIcon.png");
 
 const CreateNewPasswordScreen = () => {
@@ -16,26 +20,48 @@ const CreateNewPasswordScreen = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const navigation = useNavigation<NavigationProps>()
+    const navigation = useNavigation<NavigationProps>();
+    const route = useRoute<CreateNewPassParamType>()
 
     const [openModal, setOpenModal] = useState(false);
-    
-    const handleModal = () => {
-        setOpenModal(true);
-        const timeout = setTimeout(() => {
 
-            setOpenModal(false);
-            clearTimeout(timeout);
+    const handleConfirmResetPass = () => {
+        if(!password || !confirmPassword){
+            toast.error("Password field can't be empty")
+            return;
+        }
+        if(password != confirmPassword){
+            toast.error("Password is not same!")
+            return;
+        }
+        const payload = {
+            email: route.params.email,
+            otp: route.params.otp,
+            new_password: password,
+            new_password2: confirmPassword
+        }
 
-            navigation.reset({
-                index:1,
-                routes:[
-                    { name: 'WelcomePage' },
-                    { name: 'SignInScreen' },
-                ]
-            })
-        }, 2000)
+        setLoadingTrue();
+        confirm_reset_pass(payload, res => {
+            setLoadingFalse();
+            if(res){
+                navigation.reset({
+                    index:1,
+                    routes:[
+                        { name: 'WelcomePage' },
+                        { name: 'SignInScreen' },
+                    ]
+                })
+            }else{
+                toast.error("Something went wrong!")
+            }
+        })
+
+
+
     }
+
+
 
     return (
         <WrapperComponent
@@ -105,7 +131,7 @@ const CreateNewPasswordScreen = () => {
                     bgColor='bg-[#7ac7ea]'
                     borderColor='border-[#7ac7ea]'
                     titleColor='text-[white]'
-                    onPress={() => handleModal()}
+                    onPress={() => handleConfirmResetPass()}
                 />
 
             </ScrollView>

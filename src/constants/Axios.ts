@@ -11,6 +11,14 @@ interface Payload {
     refreshToken?: string | null
 }
 
+
+export const setHeaderToken = (token:string) => {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+export const deleteHeaderToken = () => {
+  delete api.defaults.headers.common['Authorization'];
+}
 export const loadAuthToken = async (cb:(item:Payload) => void) => {
   const accessToken = await AsyncStorage.getItem('accessToken');
   const refreshToken = await AsyncStorage.getItem('refreshToken');

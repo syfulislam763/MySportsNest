@@ -5,6 +5,9 @@ import ButtonPrimary from '@/components/ButtonPrimary';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
+import { reset_pass_request } from './AuthAPI';
+import { toast } from '@/context/useToastStore';
+import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
 
 type NavigationProps = NativeStackNavigationProp<AuthStackPramList>
 const appIcon = require("../../../assets/img/appIcon.png");
@@ -12,6 +15,21 @@ const appIcon = require("../../../assets/img/appIcon.png");
 const ForgotPasswordScreen = () => {
     const [email, setEmail] = useState('');
     const navigation = useNavigation<NavigationProps>()
+
+    const handleResetPassReq = () => {
+        const payload = {
+            email
+        }
+        setLoadingTrue();
+        reset_pass_request(payload, res => {
+            setLoadingFalse();
+            if(res){
+                navigation.navigate("OTPVerificationScreen", {isForgotPasswordPage:true, email:payload.email})
+            }else{
+                toast.error("Something went wrong!")
+            }
+        })
+    }
 
     return (
         <WrapperComponent
@@ -51,7 +69,7 @@ const ForgotPasswordScreen = () => {
                     bgColor='bg-[#7ac7ea]'
                     borderColor='border-[#7ac7ea]'
                     titleColor='text-[white]'
-                    onPress={() => navigation.navigate("OTPVerificationScreen", {isForgotPasswordPage:true})}
+                    onPress={() => handleResetPassReq()}
                 />
 
             </ScrollView>

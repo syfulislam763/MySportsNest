@@ -6,8 +6,10 @@ import ButtonPrimary from '@/components/ButtonPrimary';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
+import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 
 import { toast } from '@/context/useToastStore';
+import { register_user } from './AuthAPI';
 type NavigationProps = NativeStackNavigationProp<AuthStackPramList>
 
 const appIcon = require("../../../assets/img/appIcon.png");
@@ -34,18 +36,28 @@ const SignUpScreen = () => {
         }
         else {
             const payload = {
-                name,
-                email,
-                password
+                full_name: name,
+                email: email,
+                password: password,
+                password2: password,
             }
+            setLoadingTrue()
+            register_user(payload, res => {
+                setLoadingFalse()
+                if(res){
+                    navigation.navigate("OTPVerificationScreen", {isForgotPasswordPage:false, email: payload.email})
+                }else{
+                    //toast.error("Something went wrong, try again", 3000)
+                }
+                
+            })
 
             console.log(payload);
-            //navigation.navigate("OTPVerificationScreen", {isForgotPasswordPage:false})
+            
 
         }
     }
 
-    console.log(toast)
 
     return (
         <WrapperComponent

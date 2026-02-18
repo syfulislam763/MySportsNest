@@ -6,9 +6,13 @@ export type AuthStackPramList = {
     SignUpScreen: undefined,
     OTPVerificationScreen: {
         isForgotPasswordPage: boolean;
+        email: string
     },
     ForgotPasswordScreen: undefined,
-    CreateNewPasswordScreen: undefined,
+    CreateNewPasswordScreen: {
+        email: string,
+        otp: string
+    },
 }
 
 export type MainStackParamList = {

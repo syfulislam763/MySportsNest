@@ -7,7 +7,10 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
 import { useAuth } from '@/context/AuthProvider';
-
+import { toast } from '@/context/useToastStore';
+import { login_user } from './AuthAPI';
+import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
+import { useAuthStore, setAuthToken } from '@/context/useAuthStore';
 type NavigationProps = NativeStackNavigationProp<AuthStackPramList>
 const appIcon = require("../../../assets/img/appIcon.png");
 const google = require("../../../assets/img/google.png")
@@ -17,8 +20,42 @@ const SignInScreen = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const navigation = useNavigation<NavigationProps>();
+    const setIsAuthenticated = useAuthStore(state => state.setIsAuthenticated);
 
-    const {setIsAuthenticated} = useAuth();
+
+    const handleLogin = () => {
+        
+
+        if(!email){
+            toast.info("Email is missing", 3000)
+        }else if(!password){
+            toast.info("Password is missing", 3000)
+        }
+        else {
+            const payload = {
+                email: email,
+                password: password,
+                password2: password,
+            }
+            setLoadingTrue()
+            login_user(payload, res => {
+                setLoadingFalse();
+                if(res) {
+                    setAuthToken(res?.data?.access, res?.data?.refresh);
+                    setIsAuthenticated(true);
+                    console.log(JSON.stringify(res, null, 2), "login information")
+                }else{
+                    toast.error("Email or password is incorrect", 3000)
+                }
+                
+            })
+
+            
+            console.log(payload);
+            
+
+        }
+    }
 
 
     return (
@@ -86,7 +123,7 @@ const SignInScreen = () => {
                         bgColor='bg-[#7ac7ea]'
                         borderColor='border-[#7ac7ea]'
                         titleColor='text-[white]'
-                        onPress={() => setIsAuthenticated(true)}
+                        onPress={() => handleLogin()}
                     />
 
                     <View className='h-5'></View>

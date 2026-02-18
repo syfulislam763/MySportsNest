@@ -1,9 +1,9 @@
 
-export const BASE_URL = 'https://brochure-talks-laden-harbour.trycloudflare.com/';
+export const BASE_URL = 'https://targeted-britney-buf-informal.trycloudflare.com';
 
 
-export const REGISTER = 'api/auth/register'
-export const VERIFY_EMAIL = 'api/auth/verify-email/'
+export const REGISTER = '/api/auth/register/'
+export const VERIFY_EMAIL = '/api/auth/verify-email/'
 export const LOGIN = '/api/auth/login/'
 export const LOGOUT = '/api/auth/logout/'
 export const DELETE_ACCOUNT = '/api/auth/account/parmanent/delete/'

@@ -6,12 +6,14 @@ import BackButton from '@/components/BackButton';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '@/navigations/types';
 import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@/context/useAuthStore';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
 const ProfileSettingsScreen = () => {
     const [showLiveScores, setShowLiveScores] = useState(true);
     const [themeEnabled, setThemeEnabled] = useState(false);
+    const logout = useAuthStore(state => state.logout)
 
     const navigation = useNavigation<NavigationProps>()
 
@@ -57,8 +59,8 @@ const ProfileSettingsScreen = () => {
         { label: 'Share App Link', icon: Share2, hasArrow: true, onPress: () => {} },
         { label: 'Help Center', icon: HelpCircle, hasArrow: true, onPress: () => {} },
         { label: 'Privacy policy', icon: Shield, hasArrow: true, onPress: () => {} },
+        { label: 'Logout', icon: LogOut, color: '#ef4444', onPress: () => logout() },
         { label: 'Delete Account', icon: Trash2, color: '#ef4444', onPress: () => {} },
-        { label: 'Logout', icon: LogOut, color: '#ef4444', onPress: () => {} },
     ];
 
     return (

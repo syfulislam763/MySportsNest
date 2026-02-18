@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
 import ToastContainer from '@/components/ToastContainer';
+import LoadingContainer from '@/components/LoadingContainer';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
             <GestureHandlerRootView>
               <RootNavigation/>
               <ToastContainer/>
+              <LoadingContainer/>
             </GestureHandlerRootView>
           </AuthProvider>
         </SafeAreaProvider>

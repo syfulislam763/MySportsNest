@@ -7,33 +7,85 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackPramList } from '@/navigations/types';
 import VerificationModal from '@/components/VarificationModal';
 import { useRoute, RouteProp } from '@react-navigation/native';
+import { resend_otp, verify_email, verify_reset_pass } from './AuthAPI';
+import { toast } from '@/context/useToastStore';
+import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
 
 type NavigationProps = NativeStackNavigationProp<AuthStackPramList>
 const appIcon = require("../../../assets/img/appIcon.png");
 type OTPRouteProp = RouteProp<AuthStackPramList, 'OTPVerificationScreen'>
 const OTPVerificationScreen = () => {
     const [otp, setOtp] = useState(['', '', '', '']);
-    const [timer, setTimer] = useState(59);
+    const [timer, setTimer] = useState(10*60);
     const inputRefs = useRef<(TextInput | null)[]>([]);
     const navigation = useNavigation<NavigationProps>();
     const route = useRoute <OTPRouteProp>()
     const [openModal, setOpenModal] = useState(false);
 
-    const handleModal = () => {
-        setOpenModal(true);
-        const timeout = setTimeout(() => {
+    
+    const handleVerifyResetPass = () => {
+        const payload = {
+            email: route.params.email,
+            otp: otp.join('')
+        }
+        setLoadingTrue();
+        verify_reset_pass(payload, res => {
+            setLoadingFalse();
+            if(res){
+                navigation.navigate("CreateNewPasswordScreen", payload)
+            }else{
+                toast.success("Something went wrong!")
+            }
+            
+        })
+    }
 
-            setOpenModal(false);
-            clearTimeout(timeout);
+    const handleVerifyEmail = () => {
+        const payload = {
+            email: route.params.email,
+            otp: otp.join('')
+        }
 
-            navigation.reset({
-                index:1,
-                routes:[
-                    { name: 'WelcomePage' },
-                    { name: 'SignInScreen' },
-                ]
-            })
-        }, 2000)
+        
+        setLoadingTrue();
+        verify_email(payload, res => {
+            setLoadingFalse();
+            if(res){
+                navigation.reset({
+                    index:1,
+                    routes:[
+                        { name: 'WelcomePage' },
+                        { name: 'SignInScreen' },
+                    ]
+                })
+            }else{
+                toast.success("Something went wrong!")
+            }
+
+            
+
+        })
+
+        
+
+        
+    }
+
+    const handleResendOtp = () => {
+        const payload = {
+            email: route.params.email,
+            purpose: route.params.isForgotPasswordPage? "password_reset": 'verification'
+        }
+        setLoadingTrue();
+        resend_otp(payload, res => {
+            setLoadingFalse();
+            if(res){
+                setTimer(10*60);
+                toast.success("Verification code has been sent again!")
+            }else{
+                toast.success("Something went wrong!")
+            }
+        })
     }
 
 
@@ -89,7 +141,7 @@ const OTPVerificationScreen = () => {
                 <Text className="text-white text-2xl font-oswald-medium mb-4 mt-5">Inter OTP Code</Text>
 
                 <Text className="text-white text-sm font-oswald-regular mb-1">We have sent verification code on</Text>
-                <Text className="text-white text-sm font-oswald-regular mb-10">abed@gmail.com</Text>
+                <Text className="text-white text-sm font-oswald-regular mb-10">{route.params.email}</Text>
 
                 <View className="flex-row justify-between mb-8">
                     {otp.map((digit, index) => (
@@ -122,9 +174,10 @@ const OTPVerificationScreen = () => {
                 </View>
 
                 <View className="items-center mb-auto">
-                    <Text className="text-white text-sm font-oswald-regular">
-                        Didn't receive the code? <Text className="text-[#7ac7ea]">Resend code</Text>
-                    </Text>
+                    <View className="items-center flex-row">
+                        <Text className='text-white text-sm font-oswald-regular mr-1'>Didn't receive the code?</Text>
+                         <TouchableOpacity onPress={() => handleResendOtp()}><Text className="text-[#7ac7ea]">Resend code</Text></TouchableOpacity>
+                    </View>
                     <Text className="text-white text-sm font-oswald-regular mt-1">
                         Resend code at {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
                     </Text>
@@ -138,9 +191,9 @@ const OTPVerificationScreen = () => {
                         titleColor='text-[white]'
                         onPress={() => {
                             if(route?.params?.isForgotPasswordPage){
-                                navigation.navigate("CreateNewPasswordScreen")
+                                handleVerifyResetPass();
                             }else{
-                                handleModal()
+                                handleVerifyEmail()
                             }
                         }}
                     />
