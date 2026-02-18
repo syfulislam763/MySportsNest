@@ -7,13 +7,29 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '@/navigations/types';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/context/useAuthStore';
+import { logout_user } from '../auth_screens/AuthAPI';
+import { toast } from '@/context/useToastStore';
+import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
 const ProfileSettingsScreen = () => {
     const [showLiveScores, setShowLiveScores] = useState(true);
     const [themeEnabled, setThemeEnabled] = useState(false);
-    const logout = useAuthStore(state => state.logout)
+    const logout = useAuthStore(state => state.logout);
+    const refresh = useAuthStore(state => state.refresh);
+
+    const handleLogout = () => {
+        setLoadingTrue();
+        logout_user({refresh} , res => {
+            setLoadingFalse();
+            if(res){
+                logout();
+            }else{
+                toast.error("Logout is failed")
+            }
+        })
+    }
 
     const navigation = useNavigation<NavigationProps>()
 
@@ -59,7 +75,7 @@ const ProfileSettingsScreen = () => {
         { label: 'Share App Link', icon: Share2, hasArrow: true, onPress: () => {} },
         { label: 'Help Center', icon: HelpCircle, hasArrow: true, onPress: () => {} },
         { label: 'Privacy policy', icon: Shield, hasArrow: true, onPress: () => {} },
-        { label: 'Logout', icon: LogOut, color: '#ef4444', onPress: () => logout() },
+        { label: 'Logout', icon: LogOut, color: '#ef4444', onPress: () => handleLogout() },
         { label: 'Delete Account', icon: Trash2, color: '#ef4444', onPress: () => {} },
     ];
 
