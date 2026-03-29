@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import { StyleSheet, View , Text, TextInput, TouchableOpacity, ScrollView, Image} from 'react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import { Search, Plus, Check } from 'lucide-react-native';
@@ -7,40 +7,110 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '@/navigations/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore } from '@/context/useAuthStore';
+import { add_nest_entity, get_nest_data, get_trending_data, OnboardingAPI, remove_nest_entity } from './onboardingApi';
+import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
 
 type NavigationProps = NativeStackNavigationProp<MainStackParamList>
 
 type TrendingItem = {
-    id: string;
-    name: string;
-    type: string;
-    followers: string;
-    image: any;
+    id: number,
+    type: string,
+    name: string,
+    slug: string,
+    sport: string,
+    logo_url: string,
+    cover_image_url: string,
+    description: string,
+    country: string,
+    follower_count: number,
+    has_api_data: boolean,
+    in_nest: boolean,
+    created_at: string
+}
+
+type NEST_ITEM = {
+    id: number,
+    entity: TrendingItem,
+    position: number,
+    notify_on_games: boolean,
+    notify_on_news: boolean,
+    added_at: string
 }
 
 const WelcomeMyNestScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedTab, setSelectedTab] = useState('Trending Teams');
-    const [selectedItems, setSelectedItems] = useState<string[]>(['1', '2', '3']);
+    const [selectedTab, setSelectedTab] = useState('Trending');
+    const [filterItem, setFilterItem] = useState('teams')
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const navigation = useNavigation<NavigationProps>()
-    const insets = useSafeAreaInsets()
+    const insets = useSafeAreaInsets();
+    const access = useAuthStore((s) => s.access);
+    const logout = useAuthStore((s) => s.logout);
+    const [trendingData, setTrendingData] = useState<any>({})
 
-    const trendingData: TrendingItem[] = [
-        { id: '1', name: 'Manchester United', type: 'Team', followers: '6.2M followers', image: require('../../../assets/img/appIcon.png') },
-        { id: '2', name: 'Cristiano Ronaldo', type: 'Athlete', followers: '8.9M followers', image: require('../../../assets/img/appIcon.png') },
-        { id: '3', name: 'LeBron James', type: 'Athlete', followers: '8.9M followers', image: require('../../../assets/img/appIcon.png') },
-        { id: '4', name: 'Manchester', type: 'League', followers: '6.5M followers', image: require('../../../assets/img/appIcon.png') },
-        { id: '5', name: 'Los Angeles Lakers', type: 'Team', followers: '5.2M followers', image: require('../../../assets/img/appIcon.png') },
-        { id: '6', name: 'FC Barcelona', type: 'Team', followers: '5.2M followers', image: require('../../../assets/img/appIcon.png') },
-    ];
 
-    const toggleItem = (id: string) => {
+    const toggleItem = (id: number) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
+            setLoadingTrue();
+            remove_nest_entity({entity_id:id}, res => {
+                setLoadingFalse()
+                if(res){
+
+                }
+            })
         } else {
             setSelectedItems([...selectedItems, id]);
+            setLoadingTrue();
+            add_nest_entity({entity_id:id}, res => {
+                setLoadingFalse()
+            })
         }
     };
+
+    const handle_search = (value:any) => {
+        console.log(value)
+        setSearchQuery(value);
+        // setLoadingTrue();
+        get_trending_data(value, res => {
+            //setLoadingFalse();
+            if(res){
+                setTrendingData(res);
+            }
+        })
+    }
+
+
+
+
+    const fetchAll = async () => {
+        setLoadingTrue()
+        try{
+            const [treadingRes, nestRes] = await Promise.all([OnboardingAPI.get_trending_data(null), OnboardingAPI.get_nest_data()]);
+            setTrendingData(treadingRes.data);
+
+            const selectedEntity = (nestRes?.data?.entities ?? []).map((it:NEST_ITEM) => it.entity.id)
+            setSelectedItems(selectedEntity);
+            //console.log("nest res", JSON.stringify(nestRes.data, null, 2))
+
+        }catch(e:any){
+            console.log("err", JSON.stringify(e, null, 2));
+        }finally{
+            setLoadingFalse();
+        }
+    }
+
+
+    useEffect(()=> {
+        fetchAll();
+    }, [])
+
+    
+
+
+    const filteredData = trendingData[filterItem]
+    // console.log(JSON.stringify(selectedItems, null, 2))
 
     return (
         <View className='flex-1'>
@@ -58,7 +128,7 @@ const WelcomeMyNestScreen = () => {
                         placeholder="Search teams, athletes, leagues..."
                         placeholderTextColor="#a0a0a0"
                         value={searchQuery}
-                        onChangeText={setSearchQuery}
+                        onChangeText={handle_search}
                     />
                     <View className="absolute right-4 top-4">
                         <Search size={24} color="#5e5e5e" />
@@ -72,44 +142,57 @@ const WelcomeMyNestScreen = () => {
 
                 <View className="flex-row justify-between mb-6">
                     <TouchableOpacity 
-                        className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] mr-3 ${selectedTab === 'Trending Teams' ? 'border border-[#7ac7ea] bg-[#64737a]' : 'bg-transparent'}`}
-                        onPress={() => setSelectedTab('Trending Teams')}
+                        className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] mr-3 ${selectedTab === 'Trending' ? 'border border-[#7ac7ea] bg-[#64737a]' : 'bg-transparent'}`}
+                        onPress={() => {
+                            setSelectedTab('Trending');
+                            setFilterItem('teams')
+                        }}
                     >
-                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Trending Teams' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Trending Teams</Text>
+                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Trending' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Trending Teams</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
-                        className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] mr-3 ${selectedTab === 'Popular Athletes' ? 'bg-[#64737a] border border-[#7ac7ea]' : 'bg-transparent'}`}
-                        onPress={() => setSelectedTab('Popular Athletes')}
+                        className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] mr-3 ${selectedTab === 'Popular' ? 'bg-[#64737a] border border-[#7ac7ea]' : 'bg-transparent'}`}
+                        onPress={() => {
+                            setSelectedTab('Popular');
+                            setFilterItem('athletes')
+                        }}
                     >
-                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Popular Athletes' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Popular Athletes</Text>
+                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Popular' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Popular Athletes</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
-                        className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] ${selectedTab === 'Leagues by Region' ? 'bg-[#64737a] border border-[#7ac7ea]' : 'bg-transparent'}`}
-                        onPress={() => setSelectedTab('Leagues by Region')}
+                        className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] ${selectedTab === 'Leagues' ? 'bg-[#64737a] border border-[#7ac7ea]' : 'bg-transparent'}`}
+                        onPress={() => {
+                            setSelectedTab('Leagues');
+                            setFilterItem('leagues')
+                        }}
                     >
-                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Leagues by Region' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Leagues by Region</Text>
+                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Leagues' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Leagues by Region</Text>
                     </TouchableOpacity>
                 </View>
 
-                <Text className="text-white text-lg font-oswald-medium mb-4">Trending</Text>
+                <Text className="text-white text-lg font-oswald-medium mb-4">{selectedTab}</Text>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{
                     paddingBottom:100+ insets.bottom
                 }} className="flex-1">
-                    {trendingData.map((item) => (
+                    {(filteredData ?? []).map((item:TrendingItem) => (
                         <TouchableOpacity 
                             key={item.id}
                             className="flex-row items-center bg-transparent border-2 border-[#7ac7ea] rounded-2xl p-4 mb-3"
                             onPress={() => toggleItem(item.id)}
                         >
-                            <Image 
-                                source={item.image}
-                                style={{objectFit:'cover'}}
-                                className="w-12 h-12 rounded-full"
-                            />
+                            {item.logo_url ? 
+                                <Image 
+                                    source={{uri:item.logo_url}}
+                                    style={{objectFit:'cover'}}
+                                    className="w-12 h-12 rounded-full"
+                                />:
+                                <View className='w-12 h-12 rounded-full bg-white'></View>
+                                
+                            }
                             <View className="flex-1 ml-4">
                                 <Text className="text-white text-base font-oswald-medium">{item.name}</Text>
-                                <Text className="text-white/60 text-sm font-oswald-regular">{item.type} • {item.followers}</Text>
+                                <Text className="text-white/60 text-sm font-oswald-regular">{item.type} • {item.follower_count}</Text>
                             </View>
                             <View className="w-8 h-8 rounded-full items-center justify-center" style={{backgroundColor: selectedItems.includes(item.id) ? '#7ac7ea' : 'transparent'}}>
                                 {selectedItems.includes(item.id) ? (
@@ -139,6 +222,7 @@ const WelcomeMyNestScreen = () => {
                             borderColor='border-[#7ac7ea]'
                             titleColor='text-[white]'
                             onPress={() => navigation.navigate("ScoreVisibilityScreen")}
+                            //onPress={() => logout()}
                         />
                     </View>
                 </View>

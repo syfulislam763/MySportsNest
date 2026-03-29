@@ -1,5 +1,5 @@
 
-export const BASE_URL = 'https://targeted-britney-buf-informal.trycloudflare.com';
+export const BASE_URL = 'https://ball-nottingham-duke-teams.trycloudflare.com';
 
 
 export const REGISTER = '/api/auth/register/'
@@ -17,3 +17,12 @@ export const CHANGE_PASS = '/api/auth/password/change/'
 
 export const RESEND_OTP = '/api/auth/resend-otp/'
 export const REFRESH_TOKEN = '/api/auth/token/refresh/'
+
+
+//ONBOARDING
+
+export const TRENDING = '/api/entities/trending/';
+export const GET_NEST_API = "/api/nest/";
+export const ADD_NEST_API = "/api/nest/add/";
+export const REMOVE_NEST_API = "/api/nest/remove/";
+export const PREFERENCE  = "/api/nest/preferences/"

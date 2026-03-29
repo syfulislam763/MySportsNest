@@ -21,7 +21,8 @@ const SignInScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const navigation = useNavigation<NavigationProps>();
     const setIsAuthenticated = useAuthStore(state => state.setIsAuthenticated);
-
+    const setAccessToken = useAuthStore((s) => s.setAccessToken);
+    const setRefreshToken = useAuthStore((s) => s.setRefreshToken)
 
     const handleLogin = () => {
         
@@ -41,7 +42,8 @@ const SignInScreen = () => {
             login_user(payload, res => {
                 setLoadingFalse();
                 if(res) {
-                    setAuthToken(res?.data?.access, res?.data?.refresh);
+                    setAccessToken(res?.data?.access)
+                    setRefreshToken(res?.data?.refresh)
                     setIsAuthenticated(true);
                     console.log(JSON.stringify(res, null, 2), "login information")
                 }else{

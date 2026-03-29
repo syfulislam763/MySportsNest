@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
-import { X, Search } from 'lucide-react-native';
+import { Search, Plus, Check } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
+import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
 
 type TrendingItem = {
-    id: string;
+    id: number;
+    type: string;
     name: string;
-    type: 'Team' | 'Athlete' | 'League';
-    followers: string;
-    image: any;
-    isSelected: boolean;
+    slug: string;
+    sport: string;
+    logo_url: string;
+    cover_image_url: string;
+    description: string;
+    country: string;
+    follower_count: number;
+    has_api_data: boolean;
+    in_nest: boolean;
+    created_at: string;
+};
+
+type NEST_ITEM = {
+    id: number;
+    entity: TrendingItem;
+    position: number;
+    notify_on_games: boolean;
+    notify_on_news: boolean;
+    added_at: string;
 };
 
 type AddToNestModalProps = {
@@ -21,56 +39,91 @@ type AddToNestModalProps = {
 
 const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) => {
     const [activeTab, setActiveTab] = useState('Trending Teams');
+    const [filterItem, setFilterItem] = useState('teams');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedItems, setSelectedItems] = useState<string[]>(['1', '2', '3']);
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [trendingData, setTrendingData] = useState<any>({});
     const insets = useSafeAreaInsets();
 
-    const barcelona = require("../../assets/temp/test_p1.jpg");
-
-    const trendingData: TrendingItem[] = [
-        { id: '1', name: 'Manchester United', type: 'Team', followers: '5.2M followers', image: barcelona, isSelected: true },
-        { id: '2', name: 'Cristiano Ronaldo', type: 'Athlete', followers: '8.9M followers', image: barcelona, isSelected: true },
-        { id: '3', name: 'LeBron James', type: 'Athlete', followers: '8.9M followers', image: barcelona, isSelected: true },
-        { id: '4', name: 'Manchester', type: 'League', followers: '6.5M followers', image: barcelona, isSelected: false },
-        { id: '5', name: 'Los Angeles Lakers', type: 'Team', followers: '5.2M followers', image: barcelona, isSelected: false },
-        { id: '6', name: 'FC Barcelona', type: 'Team', followers: '5.2M followers', image: barcelona, isSelected: false },
-        { id: '7', name: 'Lionel Messi', type: 'League', followers: '6.5M followers', image: barcelona, isSelected: false },
-        { id: '8', name: 'New York Yankees', type: 'Team', followers: '5.2M followers', image: barcelona, isSelected: false },
+    const tabs = [
+        { label: 'Trending Teams', key: 'teams' },
+        { label: 'Popular Athletes', key: 'athletes' },
+        { label: 'Leagues by Region', key: 'leagues' },
     ];
 
-    const tabs = ['Trending Teams', 'Popular Athletes', 'Leagues by Region'];
-
-    const toggleSelection = (id: string) => {
-        if (selectedItems.includes(id)) {
-            setSelectedItems(selectedItems.filter(item => item !== id));
-        } else {
-            setSelectedItems([...selectedItems, id]);
+    const fetchAll = async () => {
+        setLoadingTrue();
+        try {
+            const [trendingRes, nestRes] = await Promise.all([
+                OnboardingAPI.get_trending_data(null),
+                OnboardingAPI.get_nest_data(),
+            ]);
+            setTrendingData(trendingRes.data);
+            const selectedEntity = (nestRes?.data?.entities ?? []).map((it: NEST_ITEM) => it.entity.id);
+            setSelectedItems(selectedEntity);
+        } catch (e: any) {
+            console.log('err', JSON.stringify(e, null, 2));
+        } finally {
+            setLoadingFalse();
         }
     };
 
-    const renderTrendingItem = ({ item }: { item: TrendingItem }) => (
-        <TouchableOpacity 
-            className={`flex-row items-center justify-between bg-white/10 border  rounded-2xl p-4 mb-3 ${selectedItems.includes(item.id)? "border-[#7ac7ea]/90": "border-gray-200"}`}
-            onPress={() => toggleSelection(item.id)}
-        >
-            <View className="flex-row items-center flex-1">
-                <Image 
-                    source={item.image}
-                    className="w-12 h-12 rounded-full mr-3"
-                    style={{ resizeMode: 'cover' }}
-                />
+    const handle_search = (value: string) => {
+        setSearchQuery(value);
+        OnboardingAPI.get_trending_data(value || null).then(res => {
+            if (res?.data) setTrendingData(res.data);
+        }).catch(() => {});
+    };
+
+    const toggleItem = (id: number) => {
+        if (selectedItems.includes(id)) {
+            setSelectedItems(prev => prev.filter(item => item !== id));
+            setLoadingTrue();
+            remove_nest_entity({ entity_id: id }, () => setLoadingFalse());
+        } else {
+            setSelectedItems(prev => [...prev, id]);
+            setLoadingTrue();
+            add_nest_entity({ entity_id: id }, () => setLoadingFalse());
+        }
+    };
+
+    useEffect(() => {
+        if (visible) fetchAll();
+    }, [visible]);
+
+    const filteredData: TrendingItem[] = trendingData[filterItem] ?? [];
+
+    const renderItem = ({ item }: { item: TrendingItem }) => {
+        const isSelected = selectedItems.includes(item.id);
+        return (
+            <TouchableOpacity
+                className={`flex-row items-center border rounded-2xl p-4 mb-3 ${isSelected ? 'border-[#7ac7ea]/90' : 'border-gray-200'} bg-white/10`}
+                onPress={() => toggleItem(item.id)}
+            >
+                {item.logo_url ? (
+                    <Image
+                        source={{ uri: item.logo_url }}
+                        className="w-12 h-12 rounded-full mr-3"
+                        style={{ resizeMode: 'cover' }}
+                    />
+                ) : (
+                    <View className="w-12 h-12 rounded-full bg-white mr-3" />
+                )}
                 <View className="flex-1">
                     <Text className="text-black text-base font-oswald-semiBold">{item.name}</Text>
-                    <Text className="text-gray-500 text-sm font-oswald-regular">{item.type} • {item.followers}</Text>
+                    <Text className="text-gray-500 text-sm font-oswald-regular">
+                        {item.type} • {item.follower_count}
+                    </Text>
                 </View>
-            </View>
-            <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${selectedItems.includes(item.id) ? 'bg-[#7ac7ea] border-[#7ac7ea]' : 'border-gray-400'}`}>
-                {selectedItems.includes(item.id) && (
-                    <View className="w-3 h-3 bg-white rounded-full" />
-                )}
-            </View>
-        </TouchableOpacity>
-    );
+                <View
+                    className="w-8 h-8 rounded-full items-center justify-center"
+                    style={{ backgroundColor: isSelected ? '#7ac7ea' : 'transparent' }}
+                >
+                    {isSelected ? <Check size={20} color="white" /> : <Plus size={24} color="#7ac7ea" />}
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <Modal
@@ -80,14 +133,11 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
             onRequestClose={() => onClose(false)}
         >
             <SafeAreaView className="flex-1 bg-white/10">
-                <View className='bg-white/90 mt-20 pt-5 rounded-tl-[40px] rounded-tr-[40px]'>
-                    <View className="pb-4 px-4 ">
+                <View className="bg-white/90 mt-20 pt-5 rounded-tl-[40px] rounded-tr-[40px] flex-1">
+                    
+                    <View className="pb-4 px-4">
                         <View className="flex-row items-center justify-center mb-4">
-                            <View className="w-10" />
                             <Text className="text-black text-xl font-oswald-semiBold">Add to Nest</Text>
-                            {/* <TouchableOpacity onPress={() => onClose(false)}>
-                                <X size={24} color="black" />
-                            </TouchableOpacity> */}
                         </View>
 
                         <View className="bg-gray-200 rounded-xl px-4 py-3 flex-row items-center mb-4">
@@ -96,7 +146,7 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
                                 placeholder="Search teams, athletes, leagues..."
                                 placeholderTextColor="#a0a0a0"
                                 value={searchQuery}
-                                onChangeText={setSearchQuery}
+                                onChangeText={handle_search}
                             />
                             <Search size={20} color="#a0a0a0" />
                         </View>
@@ -104,35 +154,35 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
                         <View className="flex-row items-center justify-between mb-4">
                             {tabs.map((tab) => (
                                 <TouchableOpacity
-                                    key={tab}
-                                    className={`mr-3 px-4 py-2 rounded-xl ${activeTab === tab ? 'bg-[#7ac7ea]' : 'bg-gray-100'}`}
-                                    onPress={() => setActiveTab(tab)}
+                                    key={tab.key}
+                                    className={`mr-3 px-4 py-2 rounded-xl ${activeTab === tab.label ? 'bg-[#7ac7ea]' : 'bg-gray-100'}`}
+                                    onPress={() => {
+                                        setActiveTab(tab.label);
+                                        setFilterItem(tab.key);
+                                    }}
                                 >
-                                    <Text className={`text-sm font-oswald-regular ${activeTab === tab ? 'text-white' : 'text-gray-600'}`}>
-                                        {tab}
+                                    <Text className={`text-sm font-oswald-regular ${activeTab === tab.label ? 'text-white' : 'text-gray-600'}`}>
+                                        {tab.label}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
 
-                        <Text className="text-black text-lg font-oswald-semiBold mb-3">Trending</Text>
+                        <Text className="text-black text-lg font-oswald-semiBold mb-3">{activeTab}</Text>
                     </View>
 
                     <FlatList
-                        data={trendingData}
-                        renderItem={renderTrendingItem}
-                        keyExtractor={(item) => item.id}
+                        data={filteredData}
+                        renderItem={renderItem}
+                        keyExtractor={(item) => String(item.id)}
                         showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 270 }}
+                        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 }}
                     />
-
-                    
                 </View>
-                <View 
+
+                <View
                     className="absolute bottom-0 left-0 right-0 bg-white/90 border-t border-gray-200 px-4 py-4 flex-row items-center justify-between"
-                    style={{
-                        paddingBottom: insets.bottom + 10
-                    }}
+                    style={{ paddingBottom: insets.bottom + 10 }}
                 >
                     <TouchableOpacity onPress={() => onClose(false)} className="flex-1 mr-2">
                         <Text className="text-[#7ac7ea] text-center text-base font-oswald-semiBold py-3">Cancel</Text>

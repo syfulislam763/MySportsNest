@@ -7,25 +7,41 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '@/navigations/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import VerificationModal from '@/components/VarificationModal';
+import { set_preference } from './onboardingApi';
+import { useAuthStore } from '@/context/useAuthStore';
 
 type NavigationProps = NativeStackNavigationProp<MainStackParamList>
+
+type PREFERENCE_TYPE = {
+    show_live_scores: boolean,
+    breaking_news_only: boolean,
+    notification_frequency: string
+}
 
 const ScoreVisibilityScreen = () => {
     const [showLiveScores, setShowLiveScores] = useState(true);
     const navigation = useNavigation<NavigationProps>();
+    const logout = useAuthStore((s) => s.logout);
+    const setPreference = useAuthStore((s) => s.setPreference)
 
     const [openModal, setOpenModal] = useState(false);
     
-        const handleModal = () => {
-            setOpenModal(true);
-            const timeout = setTimeout(() => {
-    
-                setOpenModal(false);
-                navigation.navigate("NestFeedScreen")
-                clearTimeout(timeout);
-
-            }, 2000)
+   const handleModal = () => {
+        setOpenModal(true);
+        const payload:PREFERENCE_TYPE = {
+            show_live_scores: showLiveScores,
+            breaking_news_only: true,
+            notification_frequency: "daily"
         }
+
+        set_preference(payload, (res) => {
+            setOpenModal(false);
+            if(res){
+                setPreference(res);
+                navigation.navigate("NestFeedScreen")
+            }
+        })
+    }
     
 
     const insets = useSafeAreaInsets()
