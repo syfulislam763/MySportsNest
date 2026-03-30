@@ -1,5 +1,5 @@
 
-export const BASE_URL = 'https://ball-nottingham-duke-teams.trycloudflare.com';
+export const BASE_URL = 'https://medium-kijiji-device-irc.trycloudflare.com';
 
 
 export const REGISTER = '/api/auth/register/'

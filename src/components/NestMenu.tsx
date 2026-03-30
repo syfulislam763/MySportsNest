@@ -1,7 +1,9 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Image, Text, Animated, Dimensions, PanResponder, Modal, ImageSourcePropType } from 'react-native';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import {
+    StyleSheet, View, TouchableOpacity, Image, Text,
+    Animated, Dimensions, PanResponder, Modal
+} from 'react-native';
 import { BlurView } from 'expo-blur';
-import { useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '@/navigations/types';
@@ -9,328 +11,392 @@ import { useNavigation } from '@react-navigation/native';
 import AddToNestModal from './AddToNestModal';
 import { OnboardingAPI } from '@/screens/onboarding_screens/onboardingApi';
 
-
 type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 
 type TrendingItem = {
-    id: number,
-    type: string,
-    name: string,
-    slug: string,
-    sport: string,
-    logo_url: string,
-    cover_image_url: string,
-    description: string,
-    country: string,
-    follower_count: number,
-    has_api_data: boolean,
-    in_nest: boolean,
+    id: number
+    type: string
+    name: string
+    slug: string
+    sport: string
+    logo_url: string
+    cover_image_url: string
+    description: string
+    country: string
+    follower_count: number
+    has_api_data: boolean
+    in_nest: boolean
     created_at: string
 }
 
 type NEST_ITEM = {
-    id: number,
-    entity: TrendingItem,
-    position: number,
-    notify_on_games: boolean,
-    notify_on_news: boolean,
+    id: number
+    entity: TrendingItem
+    position: number
+    notify_on_games: boolean
+    notify_on_news: boolean
     added_at: string
 }
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window')
 
 type CircularItem = {
-    id: string;
-    name: string;
-    image: string;
+    id: string
+    name: string
+    image: string
 }
 
 type NestMenuProps = {
-    menuOpen: boolean;
-    setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    buttonPosition?: { x: number; y: number };
+    menuOpen: boolean
+    setMenuOpen: React.Dispatch<React.SetStateAction<boolean>>
+    buttonPosition?: { x: number; y: number }
 }
 
-const NestMenu: React.FC<NestMenuProps> = ({ menuOpen, setMenuOpen, buttonPosition = { x: width / 2, y: height - 100 } }) => {
-    const rotationValue = useRef(new Animated.Value(0)).current;
-    const [currentOffset, setCurrentOffset] = useState<number>(0);
-    const lastAngle = useRef<number>(0);
-    const maxVisibleItems: number = 8;
-    const [openAddtoNestModal, setOpenAddToNestModal] = useState<boolean>()
+const RADIUS           = 140
+const ITEM_SIZE        = 70
+const MAX_VISIBLE      = 8
+const GATE_ANGLE       = Math.PI / 2
+const FADE_HALF_WIDTH  = Math.PI / 5
+const TWO_PI           = Math.PI * 2
+const WHEEL_HIT_RADIUS = RADIUS + ITEM_SIZE
 
+const wrap = (v: number) => ((v % TWO_PI) + TWO_PI) % TWO_PI
+
+const NestMenu: React.FC<NestMenuProps> = ({
+    menuOpen,
+    setMenuOpen,
+    buttonPosition = { x: width / 2, y: height - 100 },
+}) => {
+    const offsetRef     = useRef(new Animated.Value(0)).current
+    const lastAngle     = useRef<number>(0)
+    const lastSwapAngle = useRef<number[]>(Array(MAX_VISIBLE).fill(Infinity))
+    const headIndex     = useRef<number>(MAX_VISIBLE)
+    const slotAssign    = useRef<number[]>(Array(MAX_VISIBLE).fill(-1))
+
+    const [openAddtoNestModal, setOpenAddToNestModal] = useState<boolean>(false)
+    const [circularItems, setCircularItems]           = useState<CircularItem[]>([])
+    const [slotImages, setSlotImages]                 = useState<(string | null)[]>(Array(MAX_VISIBLE).fill(null))
+
+    const introAnim  = useRef(new Animated.Value(0)).current
     const navigation = useNavigation<NavigationPropsType>()
 
-    // ONLY ADD: Animation states
-    const [showMenu, setShowMenu] = useState<boolean>(false);
-    const spiralAnim = useRef(new Animated.Value(0)).current;
+    const itemAnims = useRef(
+        Array.from({ length: MAX_VISIBLE }, () => ({
+            x:       new Animated.Value(0),
+            y:       new Animated.Value(0),
+            opacity: new Animated.Value(0),
+            scale:   new Animated.Value(0),
+        }))
+    ).current
 
-    const appIcon = require("../../assets/img/appIcon.png");
-    const profilePic = require("../../assets/temp/test_p1.jpg");
-    const nest360 = require("../../assets/img/nest360.png");
-    const nest = require("../../assets/img/Nest.png");
-    const [circularItems, setCircularItems] = useState<CircularItem[]>([])
+    const cx = width / 2
+    const cy = height / 2
 
-    // const circularItems: CircularItem[] = [
-    //     { id: '1', name: 'Item 1', image: require("../../assets/temp/test_p1.jpg") },
-    //     { id: '2', name: 'Item 2', image: require("../../assets/img/appIcon.png") },
-    //     { id: '3', name: 'Item 3', image: require("../../assets/temp/test_p2.jpg") },
-    //     { id: '4', name: 'Item 4', image: require("../../assets/img/appIcon.png") },
-    //     { id: '5', name: 'Item 5', image: require("../../assets/temp/test.jpg") },
-    //     { id: '6', name: 'Item 6', image: require("../../assets/img/appIcon.png") },
-    //     { id: '7', name: 'Item 7', image: require("../../assets/img/appIcon.png") },
-    //     { id: '8', name: 'Item 8', image: require("../../assets/img/appIcon.png") },
-    //     { id: '9', name: 'Item 9', image: require("../../assets/img/appIcon.png") },
-    //     { id: '10', name: 'Item 10', image: require("../../assets/img/google.png") },
-    //     { id: '11', name: 'Item 11', image: require("../../assets/img/google.png") },
-    //     { id: '12', name: 'Item 12', image: require("../../assets/img/google.png") },
-    //     { id: '13', name: 'Item 13', image: require("../../assets/img/google.png") },
-    //     { id: '14', name: 'Item 14', image: require("../../assets/img/google.png") },
-    // ];
+    const nest360 = require('../../assets/img/nest360.png')
 
-    const handle_get_nest_data = async () => {
-        try{
-            const res = await OnboardingAPI.get_nest_data();
-            const temp = (res?.data?.entities ?? []).map((it:NEST_ITEM) => ({id: it.entity.id, name: it.entity.name, image: it.entity.logo_url}));
-            setCircularItems(temp)
-            //console.log("t", JSON.stringify(temp, null, 2))
-        }catch(e:any){
+    const seedSlots = useCallback((items: CircularItem[]) => {
+        const total   = items.length
+        const visible = Math.min(total, MAX_VISIBLE)
 
+        headIndex.current     = visible
+        lastSwapAngle.current = Array(MAX_VISIBLE).fill(Infinity)
+
+        const newImages: (string | null)[] = Array(MAX_VISIBLE).fill(null)
+        for (let i = 0; i < MAX_VISIBLE; i++) {
+            if (i < visible) {
+                slotAssign.current[i] = i
+                newImages[i] = items[i].image
+            } else {
+                slotAssign.current[i] = -1
+                newImages[i] = null
+            }
         }
-    }
+        setSlotImages(newImages)
+    }, [])
 
     useEffect(() => {
-        console.log("print")
-        handle_get_nest_data();
+        const fetchData = async () => {
+            try {
+                const res  = await OnboardingAPI.get_nest_data()
+                const temp = (res?.data?.entities ?? []).map((it: NEST_ITEM) => ({
+                    id:    String(it.entity.id),
+                    name:  it.entity.name,
+                    image: it.entity.logo_url,
+                }))
+                console.log(temp.length)
+                setCircularItems(temp)
+            } catch (_) {}
+        }
+        fetchData()
     }, [openAddtoNestModal])
 
     useEffect(() => {
+        if (circularItems.length > 0) seedSlots(circularItems)
+    }, [circularItems])
+
+    useEffect(() => {
         if (menuOpen) {
-            setShowMenu(false);
-            spiralAnim.setValue(0);
-            Animated.timing(spiralAnim, {
-                toValue: 1,
-                duration: 1200,
-                useNativeDriver: true,
-            }).start(() => {
-                setShowMenu(true);
-            });
+            offsetRef.setValue(0)
+            introAnim.setValue(0)
+            lastAngle.current = 0
+            if (circularItems.length > 0) seedSlots(circularItems)
         } else {
-            setShowMenu(false);
-            spiralAnim.setValue(0);
+            introAnim.setValue(0)
         }
-    }, [menuOpen]);
+    }, [menuOpen])
 
     useFocusEffect(
         useCallback(() => {
             if (menuOpen) {
-                setCurrentOffset(0);
-                rotationValue.setValue(0);
-                lastAngle.current = 0;
+                offsetRef.setValue(0)
+                lastAngle.current = 0
+                if (circularItems.length > 0) seedSlots(circularItems)
             }
-        }, [menuOpen])
-    );
+        }, [menuOpen, circularItems])
+    )
 
-    useFocusEffect(
-        useCallback(() => {
-            const listener = rotationValue.addListener(({ value }: { value: number }) => {
-                const anglePerItem = (Math.PI * 2) / maxVisibleItems;
-                const newOffset = Math.floor(value / anglePerItem);
-                setCurrentOffset(newOffset);
-            });
-            return () => rotationValue.removeListener(listener);
-        }, [menuOpen])
-    );
+    useEffect(() => {
+        const total   = circularItems.length
+        const visible = Math.min(total, MAX_VISIBLE)
+        if (visible === 0) return
+
+        const needsConveyor = total > MAX_VISIBLE
+
+        const id = offsetRef.addListener(({ value: offset }) => {
+            for (let slotIdx = 0; slotIdx < visible; slotIdx++) {
+                const baseAngle = GATE_ANGLE + (slotIdx / visible) * TWO_PI
+                const angle     = baseAngle + offset
+
+                const x = Math.cos(angle) * RADIUS
+                const y = Math.sin(angle) * RADIUS
+                itemAnims[slotIdx].x.setValue(x)
+                itemAnims[slotIdx].y.setValue(y)
+
+                const norm         = wrap(angle - GATE_ANGLE)
+                const distFromGate = Math.min(norm, TWO_PI - norm)
+                const opacity      = distFromGate < FADE_HALF_WIDTH
+                    ? distFromGate / FADE_HALF_WIDTH
+                    : 1
+                itemAnims[slotIdx].opacity.setValue(opacity)
+
+                if (needsConveyor && opacity < 0.12) {
+                    const snapped = Math.round(angle / (TWO_PI / visible)) * (TWO_PI / visible)
+                    if (Math.abs(snapped - lastSwapAngle.current[slotIdx]) > 0.01) {
+                        lastSwapAngle.current[slotIdx] = snapped
+                        const nextIdx  = ((headIndex.current % total) + total) % total
+                        headIndex.current += 1
+                        slotAssign.current[slotIdx] = nextIdx
+                        const newImage = circularItems[nextIdx]?.image ?? null
+                        setSlotImages(prev => {
+                            const copy = [...prev]
+                            copy[slotIdx] = newImage
+                            return copy
+                        })
+                    }
+                }
+            }
+        })
+
+        return () => offsetRef.removeListener(id)
+    }, [circularItems])
+
+    useEffect(() => {
+        const visible = Math.min(circularItems.length, MAX_VISIBLE)
+        if (!menuOpen || visible === 0) return
+
+        for (let idx = 0; idx < visible; idx++) {
+            const baseAngle = GATE_ANGLE + (idx / visible) * TWO_PI
+            const finalX    = Math.cos(baseAngle) * RADIUS
+            const finalY    = Math.sin(baseAngle) * RADIUS
+
+            itemAnims[idx].x.setValue(buttonPosition.x - cx)
+            itemAnims[idx].y.setValue(buttonPosition.y - cy)
+            itemAnims[idx].opacity.setValue(0)
+            itemAnims[idx].scale.setValue(0)
+
+            Animated.parallel([
+                Animated.timing(itemAnims[idx].x,       { toValue: finalX, duration: 600, delay: idx * 60, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].y,       { toValue: finalY, duration: 600, delay: idx * 60, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].opacity, { toValue: 1,      duration: 400, delay: idx * 60, useNativeDriver: true }),
+                Animated.spring(itemAnims[idx].scale,   { toValue: 1,                     delay: idx * 60, useNativeDriver: true }),
+            ]).start()
+        }
+    }, [menuOpen, circularItems])
 
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponder: (evt) => {
+                const dx   = evt.nativeEvent.pageX - cx
+                const dy   = evt.nativeEvent.pageY - cy
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                return dist < WHEEL_HIT_RADIUS
+            },
+            onMoveShouldSetPanResponder: (evt) => {
+                const dx   = evt.nativeEvent.pageX - cx
+                const dy   = evt.nativeEvent.pageY - cy
+                const dist = Math.sqrt(dx * dx + dy * dy)
+                return dist < WHEEL_HIT_RADIUS
+            },
             onPanResponderGrant: (evt) => {
-                const centerX: number = width / 2;
-                const centerY: number = height / 2;
-                const touchAngle: number = Math.atan2(evt.nativeEvent.pageY - centerY, evt.nativeEvent.pageX - centerX);
-                lastAngle.current = touchAngle;
+                lastAngle.current = Math.atan2(
+                    evt.nativeEvent.pageY - cy,
+                    evt.nativeEvent.pageX - cx
+                )
             },
             onPanResponderMove: (evt) => {
-                const centerX: number = width / 2;
-                const centerY: number = height / 2;
-                const currentAngle: number = Math.atan2(evt.nativeEvent.pageY - centerY, evt.nativeEvent.pageX - centerX);
-                const angleDiff: number = currentAngle - lastAngle.current;
-                
-                rotationValue.setValue((rotationValue as any)._value + angleDiff);
-                lastAngle.current = currentAngle;
+                const current = Math.atan2(
+                    evt.nativeEvent.pageY - cy,
+                    evt.nativeEvent.pageX - cx
+                )
+                let delta = current - lastAngle.current
+                if (delta >  Math.PI) delta -= TWO_PI
+                if (delta < -Math.PI) delta += TWO_PI
+                offsetRef.setValue((offsetRef as any)._value + delta)
+                lastAngle.current = current
             },
         })
-    ).current;
+    ).current
 
-    const radius: number = 140;
-    const centerX: number = width / 2;
-    const centerY: number = height / 2;
-
-    const getVisibleItemsData = (): Array<CircularItem & { position: number }> => {
-        const items: Array<CircularItem & { position: number }> = [];
-        for (let i = 0; i < Math.min(maxVisibleItems, circularItems.length); i++) {
-            const actualIndex: number = (currentOffset + i + circularItems.length * 100) % circularItems.length;
-            items.push({
-                ...circularItems[actualIndex],
-                position: i
-            });
-        }
-        return items;
-    };
-
-    const visibleItems = getVisibleItemsData();
+    const visible = Math.min(circularItems.length, MAX_VISIBLE)
 
     return (
         <Modal
             visible={menuOpen}
-            transparent={true}
+            transparent
             animationType="fade"
             onRequestClose={() => setMenuOpen(false)}
         >
-            <TouchableOpacity 
-                style={styles.modalOverlay}
+            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+
+            <TouchableOpacity
+                style={StyleSheet.absoluteFill}
                 activeOpacity={1}
                 onPress={() => setMenuOpen(false)}
-            >
-                <BlurView
-                    intensity={70}
-                    tint="light"
-                />
-                
-                <View style={styles.circularContainer} {...panResponder.panHandlers}>
-                    
-                    <View 
-                        style={{ 
-                            position: 'absolute',
-                            left: centerX - 45, 
-                            top: centerY - 45,
-                            width: 90,
-                            height: 90,
-                            zIndex: 100
-                        }}
-                    >
-                        <TouchableOpacity onPress={() => setOpenAddToNestModal(true)} className="w-full h-full rounded-full bg-[#ffffff60] items-center justify-center">
-                            <Image source={nest360} className="w-full h-full" style={{resizeMode: 'cover'}} />
-                        </TouchableOpacity>
-                    </View>
+            />
 
-                    {circularItems.length > maxVisibleItems && (
-                        <View 
-                            style={{ 
+            <View style={styles.circularContainer} pointerEvents="box-none" {...panResponder.panHandlers}>
+
+                <View style={[styles.centreWrapper, { left: cx - 45, top: cy - 45 }]}>
+                    <TouchableOpacity
+                        onPress={() => setOpenAddToNestModal(true)}
+                        style={styles.centreButton}
+                    >
+                        <Image source={nest360} style={styles.centreImage} />
+                    </TouchableOpacity>
+                </View>
+
+                {circularItems.length > MAX_VISIBLE && (
+                    <View style={[styles.badge, { left: cx - 28, top: cy + 60 }]}>
+                        <Text style={styles.badgeText}>{circularItems.length} nest</Text>
+                    </View>
+                )}
+
+                {Array.from({ length: MAX_VISIBLE }).map((_, slotIdx) => {
+                    const imageUri = slotImages[slotIdx]
+                    const isActive = slotIdx < visible && imageUri !== null
+
+                    return (
+                        <Animated.View
+                            key={slotIdx}
+                            pointerEvents={isActive ? 'auto' : 'none'}
+                            style={{
                                 position: 'absolute',
-                                left: centerX - 20, 
-                                top: centerY + 70,
-                                backgroundColor: '#7ac7ea',
-                                borderRadius: 20,
-                                paddingHorizontal: 12,
-                                paddingVertical: 6,
-                                zIndex: 100
+                                left:    cx - ITEM_SIZE / 2,
+                                top:     cy - ITEM_SIZE / 2,
+                                width:   ITEM_SIZE,
+                                height:  ITEM_SIZE,
+                                opacity: isActive ? itemAnims[slotIdx].opacity : 0,
+                                transform: [
+                                    { translateX: itemAnims[slotIdx].x },
+                                    { translateY: itemAnims[slotIdx].y },
+                                    { scale:      itemAnims[slotIdx].scale },
+                                ],
                             }}
                         >
-                            <Text className="text-white text-xs font-oswald-bold">
-                                +{circularItems.length - maxVisibleItems}
-                            </Text>
-                        </View>
-                    )}
-
-                    {visibleItems.map((item, index) => {
-                        // const baseAngle: number = (item.position / maxVisibleItems) * Math.PI * 2 - Math.PI / 2;
-                        const totalSlots = circularItems.length < maxVisibleItems ? circularItems.length : maxVisibleItems;
-                        const baseAngle: number = (item.position / totalSlots) * Math.PI * 2 - Math.PI / 2;
-                        
-                        const finalX = Math.cos(baseAngle) * radius;
-                        const finalY = Math.sin(baseAngle) * radius;
-                        
-                        const itemProgress = spiralAnim.interpolate({
-                            inputRange: [0, 0.1 + (index * 0.1), 1],
-                            outputRange: [0, 0, 1],
-                            extrapolate: 'clamp'
-                        });
-                        
-                        const animatedX = itemProgress.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [buttonPosition.x - centerX, finalX]
-                        });
-                        
-                        const animatedY = itemProgress.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [buttonPosition.y - centerY, finalY]
-                        });
-                        
-                        return (
-                            <Animated.View
-                                key={`${item.id}-${item.position}`}
-                                style={{
-                                    position: 'absolute',
-                                    left: centerX - 35,
-                                    top: centerY - 35,
-                                    opacity: showMenu ? 1 : itemProgress,
-                                    transform: [
-                                        {
-                                            rotate: rotationValue.interpolate({
-                                                inputRange: [-10000, 10000],
-                                                outputRange: ['-10000rad', '10000rad']
-                                            })
-                                        },
-                                        {
-                                            translateX: showMenu ? finalX : animatedX
-                                        },
-                                        {
-                                            translateY: showMenu ? finalY : animatedY
-                                        },
-                                        {
-                                            scale: showMenu ? 1 : itemProgress
-                                        }
-                                    ]
-                                }}
-                            >
+                            {isActive && (
                                 <TouchableOpacity
                                     onPress={() => {
-                                        setMenuOpen(false);
-                                        navigation.navigate("TeamDetailScreen")
+                                        setMenuOpen(false)
+                                        navigation.navigate('TeamDetailScreen')
                                     }}
+                                    style={styles.itemButton}
                                 >
-                                    <View className="w-[70px] h-[70px] rounded-full bg-white items-center justify-center" style={{
-                                        borderWidth: 4,
-                                        borderColor: '#7ac7ea',
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 2 },
-                                        shadowOpacity: 0.2,
-                                        shadowRadius: 4,
-                                        elevation: 4,
-                                    }}>
-                                        <Image source={{uri:item.image}} className="w-14 h-14 rounded-full" style={{resizeMode: 'cover'}} />
-                                    </View>
+                                    <Image source={{ uri: imageUri! }} style={styles.itemImage} />
                                 </TouchableOpacity>
-                            </Animated.View>
-                        );
-                    })}
+                            )}
+                        </Animated.View>
+                    )
+                })}
+            </View>
 
-                </View>
-                
-
-                {openAddtoNestModal && <AddToNestModal
+            {openAddtoNestModal && (
+                <AddToNestModal
                     visible={openAddtoNestModal}
                     onClose={() => setOpenAddToNestModal(false)}
-                    onConfirm={() => {setOpenAddToNestModal(false)}}
-                />}
-            </TouchableOpacity>
+                    onConfirm={() => setOpenAddToNestModal(false)}
+                />
+            )}
         </Modal>
-    );
+    )
 }
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(155,155,155,0.7)',
-    },
     circularContainer: {
-        flex: 0.5,
-        justifyContent: 'center',
+        flex: 1,
+    },
+    centreWrapper: {
+        position: 'absolute',
+        width: 90,
+        height: 90,
+        zIndex: 100,
+    },
+    centreButton: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 45,
+        backgroundColor: '#ffffff60',
         alignItems: 'center',
-    }
+        justifyContent: 'center',
+    },
+    centreImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+    },
+    badge: {
+        position: 'absolute',
+        backgroundColor: '#7ac7ea60',
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        zIndex: 100,
+    },
+    badgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontFamily: 'Oswald-Bold',
+    },
+    itemButton: {
+        width:           ITEM_SIZE,
+        height:          ITEM_SIZE,
+        borderRadius:    ITEM_SIZE / 2,
+        borderWidth:     4,
+        borderColor:     '#7ac7ea',
+        backgroundColor: '#fff',
+        alignItems:      'center',
+        justifyContent:  'center',
+        shadowColor:     '#000',
+        shadowOffset:    { width: 0, height: 2 },
+        shadowOpacity:   0.2,
+        shadowRadius:    4,
+        elevation:       4,
+    },
+    itemImage: {
+        width:        ITEM_SIZE - 16,
+        height:       ITEM_SIZE - 16,
+        borderRadius: (ITEM_SIZE - 16) / 2,
+        resizeMode:   'cover',
+    },
 })
 
-export default NestMenu;
-
+export default NestMenu

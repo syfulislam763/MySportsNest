@@ -79,11 +79,15 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
         if (selectedItems.includes(id)) {
             setSelectedItems(prev => prev.filter(item => item !== id));
             setLoadingTrue();
-            remove_nest_entity({ entity_id: id }, () => setLoadingFalse());
+            remove_nest_entity({ entity_id: id }, (res) => {
+                setLoadingFalse()
+            });
         } else {
             setSelectedItems(prev => [...prev, id]);
             setLoadingTrue();
-            add_nest_entity({ entity_id: id }, () => setLoadingFalse());
+            add_nest_entity({ entity_id: id }, (res) => {
+                setLoadingFalse()
+            });
         }
     };
 
