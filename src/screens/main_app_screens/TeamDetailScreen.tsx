@@ -1,19 +1,38 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions } from 'react-native';
 import { ArrowLeft, Search, ChevronRight, ChevronDown } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '@/navigations/types';
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation } from '@react-navigation/native';
 import WrapperComponent from '@/components/WrapperComponent';
 import { Post } from '@/utils/main_app_types';
-import { posts } from '@/utils/dummy_data';
 import { Heart, MoreVertical, Bookmark } from 'lucide-react-native';
 import BackButton from '@/components/BackButton';
+import { useRoute } from '@react-navigation/native';
+import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
+import { get_entity_feed } from './HomeFeedAPI';
 
 type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
+type EntityIdType = RouteProp<MainStackParamList, "TeamDetailScreen">
 
 const { width } = Dimensions.get('window');
+
+const extractDateParts = (dateInput: string) => {
+  const date = new Date(dateInput);
+
+  const day = date.getDate();
+  const month = date.toLocaleString('en-US', { month: 'short' }); 
+  const year = date.getFullYear();
+
+  const time = date.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true, 
+  });
+
+  return `${day} ${month} ${year}, ${time}`;
+};
 
 type Tab = 'Feed' | 'Stats' | 'Roster' | 'Fixtures' | 'Standings';
 
@@ -26,10 +45,21 @@ const TeamDetailScreen = () => {
     const [selectedSeason, setSelectedSeason] = useState('2023/24');
     const [selectedLeague, setSelectedLeague] = useState('Premier League');
     const [selectedRegion, setSelectedRegion] = useState('Region');
+    const [posts, setPosts] = useState<Post[]>([]);
+
+    const handle_get_entity_feed = async (id:number) => {
+        setLoadingTrue();
+        get_entity_feed(id, (res) => {
+            setLoadingFalse();
+            setPosts(res?.data?.results ?? [])
+            //console.log(JSON.stringify(res.data, null, 2), "df")
+        })
+    }
 
     const barcelona = require("../../../assets/img/barcelona.png")
 
     const navigation = useNavigation<NavigationPropsType>()
+    const route = useRoute<EntityIdType>()
 
     const teamStats = [
         { id: '1', name: 'Tigers', logo: '🐯', wins: 15, losses: 5, draws: 2 },
@@ -62,48 +92,54 @@ const TeamDetailScreen = () => {
         { id: '6', team: 'Chelsea', logo: '⚽', p: 38, w: 28, d: 5, l: 5 },
     ];
 
+    useEffect(() => {
+        handle_get_entity_feed(route.params.entity_id)
+    }, [])
+
     const tabs: Tab[] = ['Feed', 'Stats', 'Roster', 'Fixtures', 'Standings'];
 
     const renderFeedContent = () => (
             <FlatList
                 data={posts}
                 renderItem={({ item }: { item: Post }) => (
-                    <View className="p-4 mb-4 border-b border-b-white">
-                        <View className="flex-row items-start justify-between mb-3">
-                            <View className="flex-row items-start flex-1">
-                                <Image source={item.avatar} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
-                                <View className="ml-3 flex-1">
-                                    <View className="flex-row items-center flex-wrap">
-                                        <Text className="text-white text-lg font-oswald-medium">{item.user}</Text>
-                                        <Text className="text-white/60 text-sm font-oswald-regular ml-2">{item.handle}</Text>
-                                        <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
-                                        <Text className="text-white/60 text-sm font-oswald-regular ml-1">{item.timestamp}</Text>
+                        <View className="py-4 mb-4 border-b border-b-white">
+                            <View className="flex-row items-start justify-between mb-3">
+                                <View className="flex-row items-start flex-1">
+                                    <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen", {entity_id: item.id})}>
+                                        {route.params.logo?<Image source={{uri: route.params.logo}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />: <View className="w-12 h-12 rounded-full bg-white" ></View>}
+                                    </TouchableOpacity>
+                                    <View className="ml-3 flex-1">
+                                        <View className="flex-row items-center flex-wrap">
+                                            <Text className="text-white text-lg font-oswald-medium">{item.entity_names.length?item.entity_names[0]:""}</Text>
+                                            <Text className="text-white/60 text-sm font-oswald-regular ml-2">{"@name"}</Text>
+                                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
+                                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>
+                                        </View>
+                                        <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
                                     </View>
-                                    <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source}</Text>
+                                </View>
+                                <MoreVertical size={24} color="white" />
+                            </View>
+                
+                            <View className='flex-row items-center justify-between'>
+                                <View className='h-12 w-12'></View>
+                                <View className='flex-1 ml-3'>
+                                    <Text className="text-white text-lg font-oswald-medium mb-2 leading-6">{item.title}</Text>
+                                    <Text className="text-white text-sm font-oswald-regular mb-4 leading-5">{item.summary}</Text>
+                                    {item.thumbnail_url && <Image source={{uri:item.thumbnail_url}} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
+                
+                                    <View className="flex-row items-center justify-end">
+                                        <View className="flex-row items-center mr-5">
+                                            <Heart size={22} color="#7ac7ea" fill="#7ac7ea" />
+                                            <Text className="text-white text-base font-oswald-regular ml-2">{item.views}</Text>
+                                        </View>
+                                        <Bookmark size={22} color="white" />
+                                    </View>
                                 </View>
                             </View>
-                            <MoreVertical size={24} color="white" />
                         </View>
-
-                        <View className='flex-row items-center justify-between'>
-                            <View className='h-12 w-12'></View>
-                            <View className='flex-1 ml-3'>
-                                <Text className="text-white text-lg font-oswald-medium mb-2 leading-6">{item.title}</Text>
-                                <Text className="text-white text-sm font-oswald-regular mb-4 leading-5">{item.description}</Text>
-                                {item.image && <Image source={item.image} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
-
-                                <View className="flex-row items-center justify-end">
-                                    <View className="flex-row items-center mr-5">
-                                        <Heart size={22} color="#7ac7ea" fill="#7ac7ea" />
-                                        <Text className="text-white text-base font-oswald-regular ml-2">{item.likes}</Text>
-                                    </View>
-                                    <Bookmark size={22} color="white" />
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id}
+                    )}
+                keyExtractor={(item) => item.id.toString()}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
             />

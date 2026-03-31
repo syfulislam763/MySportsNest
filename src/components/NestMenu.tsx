@@ -52,6 +52,8 @@ type NestMenuProps = {
     buttonPosition?: { x: number; y: number }
 }
 
+const EMPTY_ITEM: CircularItem = { id: '', name: '', image: '' }
+
 const RADIUS           = 140
 const ITEM_SIZE        = 70
 const MAX_VISIBLE      = 8
@@ -75,7 +77,10 @@ const NestMenu: React.FC<NestMenuProps> = ({
 
     const [openAddtoNestModal, setOpenAddToNestModal] = useState<boolean>(false)
     const [circularItems, setCircularItems]           = useState<CircularItem[]>([])
-    const [slotImages, setSlotImages]                 = useState<(string | null)[]>(Array(MAX_VISIBLE).fill(null))
+
+    const [slotItems, setSlotItems] = useState<CircularItem[]>(
+        Array(MAX_VISIBLE).fill(EMPTY_ITEM)
+    )
 
     const introAnim  = useRef(new Animated.Value(0)).current
     const navigation = useNavigation<NavigationPropsType>()
@@ -91,27 +96,21 @@ const NestMenu: React.FC<NestMenuProps> = ({
 
     const cx = width / 2
     const cy = height / 2
-
     const nest360 = require('../../assets/img/nest360.png')
 
     const seedSlots = useCallback((items: CircularItem[]) => {
         const total   = items.length
         const visible = Math.min(total, MAX_VISIBLE)
 
-        headIndex.current     = visible
+        headIndex.current     = visible     
         lastSwapAngle.current = Array(MAX_VISIBLE).fill(Infinity)
 
-        const newImages: (string | null)[] = Array(MAX_VISIBLE).fill(null)
+        const newSlots: CircularItem[] = Array(MAX_VISIBLE).fill(EMPTY_ITEM)
         for (let i = 0; i < MAX_VISIBLE; i++) {
-            if (i < visible) {
-                slotAssign.current[i] = i
-                newImages[i] = items[i].image
-            } else {
-                slotAssign.current[i] = -1
-                newImages[i] = null
-            }
+            slotAssign.current[i] = i < visible ? i : -1
+            newSlots[i]           = i < visible ? items[i] : EMPTY_ITEM
         }
-        setSlotImages(newImages)
+        setSlotItems(newSlots)
     }, [])
 
     useEffect(() => {
@@ -123,7 +122,6 @@ const NestMenu: React.FC<NestMenuProps> = ({
                     name:  it.entity.name,
                     image: it.entity.logo_url,
                 }))
-                console.log(temp.length)
                 setCircularItems(temp)
             } catch (_) {}
         }
@@ -167,10 +165,8 @@ const NestMenu: React.FC<NestMenuProps> = ({
                 const baseAngle = GATE_ANGLE + (slotIdx / visible) * TWO_PI
                 const angle     = baseAngle + offset
 
-                const x = Math.cos(angle) * RADIUS
-                const y = Math.sin(angle) * RADIUS
-                itemAnims[slotIdx].x.setValue(x)
-                itemAnims[slotIdx].y.setValue(y)
+                itemAnims[slotIdx].x.setValue(Math.cos(angle) * RADIUS)
+                itemAnims[slotIdx].y.setValue(Math.sin(angle) * RADIUS)
 
                 const norm         = wrap(angle - GATE_ANGLE)
                 const distFromGate = Math.min(norm, TWO_PI - norm)
@@ -183,13 +179,15 @@ const NestMenu: React.FC<NestMenuProps> = ({
                     const snapped = Math.round(angle / (TWO_PI / visible)) * (TWO_PI / visible)
                     if (Math.abs(snapped - lastSwapAngle.current[slotIdx]) > 0.01) {
                         lastSwapAngle.current[slotIdx] = snapped
+
                         const nextIdx  = ((headIndex.current % total) + total) % total
                         headIndex.current += 1
                         slotAssign.current[slotIdx] = nextIdx
-                        const newImage = circularItems[nextIdx]?.image ?? null
-                        setSlotImages(prev => {
-                            const copy = [...prev]
-                            copy[slotIdx] = newImage
+
+                        const nextItem = circularItems[nextIdx] ?? EMPTY_ITEM
+                        setSlotItems(prev => {
+                            const copy    = [...prev]  
+                            copy[slotIdx] = nextItem   
                             return copy
                         })
                     }
@@ -226,16 +224,14 @@ const NestMenu: React.FC<NestMenuProps> = ({
     const panResponder = useRef(
         PanResponder.create({
             onStartShouldSetPanResponder: (evt) => {
-                const dx   = evt.nativeEvent.pageX - cx
-                const dy   = evt.nativeEvent.pageY - cy
-                const dist = Math.sqrt(dx * dx + dy * dy)
-                return dist < WHEEL_HIT_RADIUS
+                const dx = evt.nativeEvent.pageX - cx
+                const dy = evt.nativeEvent.pageY - cy
+                return Math.sqrt(dx * dx + dy * dy) < WHEEL_HIT_RADIUS
             },
             onMoveShouldSetPanResponder: (evt) => {
-                const dx   = evt.nativeEvent.pageX - cx
-                const dy   = evt.nativeEvent.pageY - cy
-                const dist = Math.sqrt(dx * dx + dy * dy)
-                return dist < WHEEL_HIT_RADIUS
+                const dx = evt.nativeEvent.pageX - cx
+                const dy = evt.nativeEvent.pageY - cy
+                return Math.sqrt(dx * dx + dy * dy) < WHEEL_HIT_RADIUS
             },
             onPanResponderGrant: (evt) => {
                 lastAngle.current = Math.atan2(
@@ -292,8 +288,8 @@ const NestMenu: React.FC<NestMenuProps> = ({
                 )}
 
                 {Array.from({ length: MAX_VISIBLE }).map((_, slotIdx) => {
-                    const imageUri = slotImages[slotIdx]
-                    const isActive = slotIdx < visible && imageUri !== null
+                    const item     = slotItems[slotIdx]
+                    const isActive = slotIdx < visible && item.id !== ''
 
                     return (
                         <Animated.View
@@ -317,11 +313,18 @@ const NestMenu: React.FC<NestMenuProps> = ({
                                 <TouchableOpacity
                                     onPress={() => {
                                         setMenuOpen(false)
-                                        navigation.navigate('TeamDetailScreen')
+                                        console.log(item.id)
+                                        navigation.navigate('TeamDetailScreen', {
+                                            entity_id: Number(item.id),
+                                            logo: item.image
+                                        })
                                     }}
                                     style={styles.itemButton}
                                 >
-                                    <Image source={{ uri: imageUri! }} style={styles.itemImage} />
+                                    <Image
+                                        source={{ uri: item.image }}
+                                        style={styles.itemImage}
+                                    />
                                 </TouchableOpacity>
                             )}
                         </Animated.View>

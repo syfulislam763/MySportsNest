@@ -1,6 +1,7 @@
-import React, { createContext, ReactNode, useState, useContext } from "react";
+import React, { createContext, ReactNode, useState, useContext, useEffect } from "react";
 
-
+import { useAuthStore } from "./useAuthStore";
+import { setHeaderToken } from "@/constants/Axios";
 type AuthProviderProps = {
     children: ReactNode
 }
@@ -13,8 +14,13 @@ const AuthContext = createContext<AuthContextProps | undefined | null >(null);
 
 export const AuthProvider = ({children}:AuthProviderProps) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+    const token = useAuthStore((s) => s.access)
 
+
+    useEffect(() => {
+        console.log("token", token)
+        setHeaderToken(token);
+    }, [])
 
     return (
         <AuthContext.Provider

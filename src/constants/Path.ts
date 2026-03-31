@@ -26,3 +26,7 @@ export const GET_NEST_API = "/api/nest/";
 export const ADD_NEST_API = "/api/nest/add/";
 export const REMOVE_NEST_API = "/api/nest/remove/";
 export const PREFERENCE  = "/api/nest/preferences/"
+
+// HOME Page
+export const HOME_FEED_API = "/api/feed/nest/";
+export const ENTITY_FEED_API = "/api/feed/entity/"

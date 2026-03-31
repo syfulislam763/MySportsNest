@@ -20,6 +20,8 @@ const ProfileSettingsScreen = () => {
     const refresh = useAuthStore(state => state.refresh);
 
     const handleLogout = () => {
+        // logout();
+        // return;
         setLoadingTrue();
         logout_user({refresh} , res => {
             setLoadingFalse();

@@ -1,7 +1,7 @@
 import { Post } from "./main_app_types";
 
 
-export const posts: Post[] = [
+export const posts = [
         {
             id: '1',
             user: 'Manchester',

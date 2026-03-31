@@ -19,7 +19,10 @@ export type MainStackParamList = {
     WelcomeMyNestScreen: undefined,
     ScoreVisibilityScreen: undefined,
     NestFeedScreen: undefined,
-    TeamDetailScreen: undefined,
+    TeamDetailScreen: {
+        entity_id: number,
+        logo?: string
+    },
     ProfileSettingsScreen: undefined,
     GoAdFreeScreen:undefined,
     EditProfileScreen: undefined,

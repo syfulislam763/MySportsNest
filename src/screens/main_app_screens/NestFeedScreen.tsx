@@ -4,24 +4,42 @@ import { Search, ChevronDown, SlidersHorizontal, Heart, Bookmark, MoreVertical, 
 import WrapperComponent from '@/components/WrapperComponent';
 import NestMenu from '@/components/NestMenu';
 import LiveBar from '@/components/LiveBar';
-import { posts } from '@/utils/dummy_data';
 import { Post } from '@/utils/main_app_types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '@/navigations/types';
 import { useNavigation } from '@react-navigation/native';
 import WeeklyCalendar from './WeeklyCalendar';
+import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
+import { get_home_feed } from './HomeFeedAPI';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
 const { width, height } = Dimensions.get('window');
+
+const extractDateParts = (dateInput: string) => {
+  const date = new Date(dateInput);
+
+  const day = date.getDate();
+  const month = date.toLocaleString('en-US', { month: 'short' }); 
+  const year = date.getFullYear();
+
+  const time = date.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true, 
+  });
+
+  return `${day} ${month} ${year}, ${time}`;
+};
 
 const NestFeedScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);
     const [sortOpen, setSortOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
-    const [selectedSort, setSelectedSort] = useState('Latest');
+    const [selectedSort, setSelectedSort] = useState('');
     const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+    const [posts, setPosts] = useState<Post[]>([])
 
     const navigation = useNavigation<NavigationProps>()
 
@@ -34,12 +52,50 @@ const NestFeedScreen = () => {
 
     const [activeTab, setActiveTab] = useState<string>("feed")
     
+    const handle_get_feed_posts = (query: string | null) => {
+        setLoadingTrue();
+        get_home_feed(query, (res) => {
+            setLoadingFalse()
+            if(res){
+                setPosts(res?.data?.results ??[])
+                //console.log("feed", JSON.stringify(res.data, null, 2))
+            }
+        })
+    }
+
+    const handleSearch = (value:string) => {
+        setSearchQuery(value);
+        const search = value? `q=${value.toLowerCase()}`: null
+        get_home_feed(search, (res) => {
+            if(res){
+                setPosts(res?.data?.results ??[])
+            }
+        })
+    }
+
+    const handleSort = (sortString:string) => {
+        setLoadingTrue();
+        setSelectedSort(sortString);
+        setSortOpen(false);
+        handle_get_feed_posts(`sort=${sortString.toLowerCase()}`)
+        
+    }
+
+    const handleFilter = () => {
+        setLoadingTrue();
+        handle_get_feed_posts(`type=${selectedFilters[0].toLowerCase()}`)
+        setFilterOpen(false)
+    }
+
+    useEffect(() => {
+        handle_get_feed_posts(null);
+    }, [])
 
     const toggleFilter = (filter: string) => {
         if (selectedFilters.includes(filter)) {
             setSelectedFilters(selectedFilters.filter(f => f !== filter));
         } else {
-            setSelectedFilters([...selectedFilters, filter]);
+            setSelectedFilters([filter]);
         }
     };
 
@@ -47,17 +103,17 @@ const NestFeedScreen = () => {
         <View className="py-4 mb-4 border-b border-b-white">
             <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-row items-start flex-1">
-                    <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen")}>
-                        <Image source={item.avatar} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                    <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen", {entity_id: item.id})}>
+                        {item.source_logo?<Image source={{uri: item.source_logo}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />: <View className="w-12 h-12 rounded-full bg-white" ></View>}
                     </TouchableOpacity>
                     <View className="ml-3 flex-1">
                         <View className="flex-row items-center flex-wrap">
-                            <Text className="text-white text-lg font-oswald-medium">{item.user}</Text>
-                            <Text className="text-white/60 text-sm font-oswald-regular ml-2">{item.handle}</Text>
+                            <Text className="text-white text-lg font-oswald-medium">{item.entity_names.length?item.entity_names[0]:""}</Text>
+                            <Text className="text-white/60 text-sm font-oswald-regular ml-2">{"@name"}</Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
-                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{item.timestamp}</Text>
+                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>
                         </View>
-                        <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source}</Text>
+                        <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
                     </View>
                 </View>
                 <MoreVertical size={24} color="white" />
@@ -67,13 +123,13 @@ const NestFeedScreen = () => {
                 <View className='h-12 w-12'></View>
                 <View className='flex-1 ml-3'>
                     <Text className="text-white text-lg font-oswald-medium mb-2 leading-6">{item.title}</Text>
-                    <Text className="text-white text-sm font-oswald-regular mb-4 leading-5">{item.description}</Text>
-                    {item.image && <Image source={item.image} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
+                    <Text className="text-white text-sm font-oswald-regular mb-4 leading-5">{item.summary}</Text>
+                    {item.thumbnail_url && <Image source={{uri:item.thumbnail_url}} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
 
                     <View className="flex-row items-center justify-end">
                         <View className="flex-row items-center mr-5">
                             <Heart size={22} color="#7ac7ea" fill="#7ac7ea" />
-                            <Text className="text-white text-base font-oswald-regular ml-2">{item.likes}</Text>
+                            <Text className="text-white text-base font-oswald-regular ml-2">{item.views}</Text>
                         </View>
                         <Bookmark size={22} color="white" />
                     </View>
@@ -98,7 +154,7 @@ const NestFeedScreen = () => {
                                     placeholder="Search teams, athletes, leagues..."
                                     placeholderTextColor="#a0a0a0"
                                     value={searchQuery}
-                                    onChangeText={setSearchQuery}
+                                    onChangeText={handleSearch}
                                 />
                                 <View className="absolute right-4 top-3">
                                     <Search size={22} color="#5e5e5e" />
@@ -140,6 +196,14 @@ const NestFeedScreen = () => {
                             >
                                 <Text className="text-white text-sm font-oswald-regular mr-1">Sort</Text>
                                 <ChevronDown size={16} color="white" />
+
+                                {selectedSort && <View className='ml-1 flex-row items-center bg-slate-600 rounded-2xl px-1.5 py-1'>
+                                    <Text className="text-white text-sm font-oswald-regular mr-1">{selectedSort}</Text>
+                                    <X color={"white"} onPress={() => {
+                                        handle_get_feed_posts(null);
+                                        setSelectedSort("")
+                                    }} size={15}/>
+                                </View>}
                             </TouchableOpacity>
 
                             <TouchableOpacity 
@@ -151,6 +215,14 @@ const NestFeedScreen = () => {
                             >
                                 <SlidersHorizontal size={18} color="white" />
                                 <Text className="text-white text-sm font-oswald-regular ml-1">Filter</Text>
+
+                                {selectedFilters.length > 0 && <View className='ml-1 flex-row items-center bg-slate-600 rounded-2xl px-1.5 py-1'>
+                                    <Text className="text-white text-sm font-oswald-regular mr-1">{ selectedFilters[0] }</Text>
+                                    <X color={"white"} onPress={() => {
+                                        handle_get_feed_posts(null);
+                                        setSelectedFilters([])
+                                    }} size={15}/>
+                                </View>}
                             </TouchableOpacity>
                         </View>
 
@@ -161,8 +233,7 @@ const NestFeedScreen = () => {
                                         key={option}
                                         className="py-2 px-4"
                                         onPress={() => {
-                                            setSelectedSort(option);
-                                            setSortOpen(false);
+                                            handleSort(option)
                                         }}
                                     >
                                         <Text className={`text-sm font-oswald-regular ${selectedSort === option ? 'text-[#7ac7ea]' : 'text-[#5e5e5e]'}`}>
@@ -201,7 +272,7 @@ const NestFeedScreen = () => {
                                 ))}
                                 <TouchableOpacity 
                                     className="bg-[#7ac7ea]/70 rounded-full py-2 mt-2"
-                                    onPress={() => setFilterOpen(false)}
+                                    onPress={() => handleFilter()}
                                 >
                                     <Text className="text-white text-center text-sm font-oswald-medium">Apply</Text>
                                 </TouchableOpacity>
@@ -212,7 +283,7 @@ const NestFeedScreen = () => {
                         <FlatList
                             data={posts}
                             renderItem={renderPost}
-                            keyExtractor={(item) => item.id}
+                            keyExtractor={(item) => item.id.toString()}
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingTop: 8, paddingBottom: 200 }}
                         />
