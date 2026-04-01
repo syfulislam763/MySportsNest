@@ -102,7 +102,9 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
         return (
             <TouchableOpacity
                 className={`flex-row items-center border rounded-2xl p-4 mb-3 ${isSelected ? 'border-[#7ac7ea]/90' : 'border-gray-200'} bg-white/10`}
-                onPress={() => toggleItem(item.id)}
+                onPress={() => {
+                    console.log("view")
+                }}
             >
                 {item.logo_url ? (
                     <Image
@@ -119,12 +121,13 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
                         {item.type} • {item.follower_count}
                     </Text>
                 </View>
-                <View
+                <TouchableOpacity
                     className="w-8 h-8 rounded-full items-center justify-center"
                     style={{ backgroundColor: isSelected ? '#7ac7ea' : 'transparent' }}
+                    onPress={() => toggleItem(item.id)}
                 >
                     {isSelected ? <Check size={20} color="white" /> : <Plus size={24} color="#7ac7ea" />}
-                </View>
+                </TouchableOpacity>
             </TouchableOpacity>
         );
     };

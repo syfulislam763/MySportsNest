@@ -5,7 +5,7 @@ import { ENTITY_FEED_API, HOME_FEED_API } from "@/constants/Path";
 type CALLBACK = (res:any | null) => void
 
 export const get_home_feed = async (query:string | null, cb:CALLBACK) => {
-    const url = query?`${HOME_FEED_API}${query}`: HOME_FEED_API;
+    const url = query?`${HOME_FEED_API}?${query}`: HOME_FEED_API;
     console.log(url, "home feed")
     try{
         const res = await api.get(url);

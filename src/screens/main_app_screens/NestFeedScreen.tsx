@@ -77,13 +77,15 @@ const NestFeedScreen = () => {
         setLoadingTrue();
         setSelectedSort(sortString);
         setSortOpen(false);
-        handle_get_feed_posts(`sort=${sortString.toLowerCase()}`)
+        const q = selectedFilters.length>0? `type=${selectedFilters[0].toLowerCase()}&sort=${sortString.toLowerCase()}`:`sort=${sortString.toLowerCase()}`
+        handle_get_feed_posts(q)
         
     }
 
     const handleFilter = () => {
         setLoadingTrue();
-        handle_get_feed_posts(`type=${selectedFilters[0].toLowerCase()}`)
+        const q = selectedSort? `type=${selectedFilters[0].toLowerCase()}&sort=${selectedSort.toLowerCase()}`:`type=${selectedFilters[0].toLowerCase()}`
+        handle_get_feed_posts(q)
         setFilterOpen(false)
     }
 
@@ -200,7 +202,11 @@ const NestFeedScreen = () => {
                                 {selectedSort && <View className='ml-1 flex-row items-center bg-slate-600 rounded-2xl px-1.5 py-1'>
                                     <Text className="text-white text-sm font-oswald-regular mr-1">{selectedSort}</Text>
                                     <X color={"white"} onPress={() => {
-                                        handle_get_feed_posts(null);
+                                        if(selectedFilters.length>0){
+                                            handle_get_feed_posts(`type=${selectedFilters[0].toLowerCase()}`);
+                                        }else{
+                                            handle_get_feed_posts(null);
+                                        }
                                         setSelectedSort("")
                                     }} size={15}/>
                                 </View>}
@@ -219,7 +225,11 @@ const NestFeedScreen = () => {
                                 {selectedFilters.length > 0 && <View className='ml-1 flex-row items-center bg-slate-600 rounded-2xl px-1.5 py-1'>
                                     <Text className="text-white text-sm font-oswald-regular mr-1">{ selectedFilters[0] }</Text>
                                     <X color={"white"} onPress={() => {
-                                        handle_get_feed_posts(null);
+                                        if(selectedSort){
+                                            handle_get_feed_posts(`sort=${selectedSort.toLowerCase()}`);
+                                        }else{
+                                            handle_get_feed_posts(null);
+                                        }
                                         setSelectedFilters([])
                                     }} size={15}/>
                                 </View>}

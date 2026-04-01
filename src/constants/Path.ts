@@ -1,5 +1,5 @@
 
-export const BASE_URL = 'https://medium-kijiji-device-irc.trycloudflare.com';
+export const BASE_URL = 'https://breach-utah-checklist-providers.trycloudflare.com';
 
 
 export const REGISTER = '/api/auth/register/'
