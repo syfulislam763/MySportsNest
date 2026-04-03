@@ -11,12 +11,43 @@ import { Heart, MoreVertical, Bookmark } from 'lucide-react-native';
 import BackButton from '@/components/BackButton';
 import { useRoute } from '@react-navigation/native';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
-import { get_entity_feed } from './HomeFeedAPI';
+import { feedback_post, get_entity_details, get_entity_feed, get_entity_fixture, get_entity_roster, get_entity_standings, get_entity_status, like_post } from './HomeFeedAPI';
+import { Check,Plus } from 'lucide-react-native';
 
 type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 type EntityIdType = RouteProp<MainStackParamList, "TeamDetailScreen">
 
 const { width } = Dimensions.get('window');
+
+interface Entity {
+  id: number;
+  type: string;
+  name: string;
+  slug: string;
+  sport: string;
+  logo_url: string;
+  cover_image_url: string;
+  description: string;
+  country: string;
+  follower_count: number;
+  has_api_data: boolean;
+  in_nest: boolean;
+  created_at: string;
+}
+
+export interface TeamProfile {
+  entity: Entity;
+  league: string | null;
+  venue_name: string;
+  venue_city: string;
+  venue_capacity: number | null;
+  total_wins: number;
+  total_losses: number;
+  win_percentage: string;
+  website_url: string;
+  twitter_handle: string;
+  youtube_channel_id: string;
+}
 
 const extractDateParts = (dateInput: string) => {
   const date = new Date(dateInput);
@@ -46,6 +77,41 @@ const TeamDetailScreen = () => {
     const [selectedLeague, setSelectedLeague] = useState('Premier League');
     const [selectedRegion, setSelectedRegion] = useState('Region');
     const [posts, setPosts] = useState<Post[]>([]);
+    const [entityDetails, setEntityDetails] = useState<TeamProfile>();
+
+    console.log("entity details", JSON.stringify(entityDetails, null, 2))
+
+    const handle_get_entity_details = async (id:number) => {
+        setLoadingTrue();
+        get_entity_details(id, (res) => {
+            setLoadingFalse();
+            setEntityDetails(res.data)
+            //console.log(JSON.stringify(res.data, null, 2), "df")
+        })
+    }
+
+    useEffect(() => {
+        handle_get_entity_details(route.params.entity_id)
+    }, [])
+
+
+    const handle_Like = (id:number) => {
+   
+        like_post(id, (res) => {
+            if(res){
+                handle_get_entity_feed(route.params.entity_id)
+            }
+        })
+    }
+    
+    const handle_feedback = (id:number) => {
+
+        feedback_post(id, (res) => {
+            if(res){
+                handle_get_entity_feed(route.params.entity_id)
+            }
+        })
+    }
 
     const handle_get_entity_feed = async (id:number) => {
         setLoadingTrue();
@@ -55,6 +121,38 @@ const TeamDetailScreen = () => {
             //console.log(JSON.stringify(res.data, null, 2), "df")
         })
     }
+    const handle_get_entity_stats = async (id:number) => {
+        setLoadingTrue();
+        get_entity_status(id, (res) => {
+            setLoadingFalse();
+            console.log(JSON.stringify(res.data, null, 2), "stats")
+        })
+    }
+    const handle_get_entity_roster = async (id:number) => {
+        setLoadingTrue();
+        get_entity_roster(id, (res) => {
+            setLoadingFalse();
+            console.log(JSON.stringify(res.data, null, 2), "roster")
+        })
+    }
+
+    const handle_get_entity_fixture = async (id:number) => {
+        setLoadingTrue();
+        get_entity_fixture(id, (res) => {
+            setLoadingFalse();
+
+            console.log(JSON.stringify(res.data, null, 2), "fixture")
+        })
+    }
+
+    const handle_get_entity_standings = async (id:number) => {
+        setLoadingTrue();
+        get_entity_standings(id, (res) => {
+            setLoadingFalse();
+            console.log(JSON.stringify(res.data, null, 2), "standings")
+        })
+    }
+
 
     const barcelona = require("../../../assets/img/barcelona.png")
 
@@ -91,10 +189,31 @@ const TeamDetailScreen = () => {
         { id: '5', team: 'Manchester City', logo: '⚽', p: 38, w: 20, d: 5, l: 5 },
         { id: '6', team: 'Chelsea', logo: '⚽', p: 38, w: 28, d: 5, l: 5 },
     ];
+    const handle_get_data = () => {
+        switch (activeTab) {
+            case 'Feed':
+                handle_get_entity_feed(route.params.entity_id)
+                return;
+            case 'Stats':
+                handle_get_entity_stats(route.params.entity_id)
+                return ;
+            case 'Roster':
+                handle_get_entity_roster(route.params.entity_id)
+                return ;
+            case 'Fixtures':
+                handle_get_entity_fixture(route.params.entity_id)
+                return;
+            case 'Standings':
+                handle_get_entity_standings(route.params.entity_id)
+                return ;
+            default:
+                return null;
+        }
+    };
 
     useEffect(() => {
-        handle_get_entity_feed(route.params.entity_id)
-    }, [])
+        handle_get_data()
+    }, [activeTab])
 
     const tabs: Tab[] = ['Feed', 'Stats', 'Roster', 'Fixtures', 'Standings'];
 
@@ -106,7 +225,7 @@ const TeamDetailScreen = () => {
                             <View className="flex-row items-start justify-between mb-3">
                                 <View className="flex-row items-start flex-1">
                                     <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen", {entity_id: item.id})}>
-                                        {route.params.logo?<Image source={{uri: route.params.logo}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />: <View className="w-12 h-12 rounded-full bg-white" ></View>}
+                                        {item.source_logo?<Image source={{uri: item.source_logo}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />: <View className="w-12 h-12 rounded-full bg-white" ></View>}
                                     </TouchableOpacity>
                                     <View className="ml-3 flex-1">
                                         <View className="flex-row items-center flex-wrap">
@@ -129,17 +248,21 @@ const TeamDetailScreen = () => {
                                     {item.thumbnail_url && <Image source={{uri:item.thumbnail_url}} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
                 
                                     <View className="flex-row items-center justify-end">
-                                        <View className="flex-row items-center mr-5">
-                                            <Heart size={22} color="#7ac7ea" fill="#7ac7ea" />
+                                        <TouchableOpacity onPress={() => {
+                                            handle_Like(item.id)
+                                        }} className="flex-row items-center mr-5">
+                                            <Heart size={22} color="#7ac7ea" fill={item.is_liked?"#7ac7ea":"#ffff"} />
                                             <Text className="text-white text-base font-oswald-regular ml-2">{item.views}</Text>
-                                        </View>
-                                        <Bookmark size={22} color="white" />
+                                        </TouchableOpacity>
+                                        <Bookmark onPress={()=> {
+                                            handle_feedback(item.id)
+                                        }} size={22} color={item.is_bookmarked?"#7ac7ea": "white"} fill={item.is_bookmarked?"#7ac7ea": "#5e5e5e"} />
                                     </View>
                                 </View>
                             </View>
                         </View>
                     )}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item, idx) => idx.toString()}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
             />
@@ -165,7 +288,7 @@ const TeamDetailScreen = () => {
                     <ChevronRight size={20} color="white" />
                 </TouchableOpacity>
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, idx) => idx.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
         />
@@ -187,7 +310,7 @@ const TeamDetailScreen = () => {
                     <ChevronRight size={20} color="white" />
                 </TouchableOpacity>
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, idx) => idx.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
         />
@@ -225,7 +348,7 @@ const TeamDetailScreen = () => {
                     </View>
                 </View>
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, idx) => idx.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
         />
@@ -311,16 +434,16 @@ const TeamDetailScreen = () => {
                     </View>
                 </View>
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, idx) => idx.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 100 }}
         />
         
         {seasonOpen && (
             <View className="absolute top-20 left-0 bg-white rounded-xl p-2" style={{ width: 120, elevation: 10 }}>
-                {['2023/24', '2022/23', '2021/22'].map((season) => (
+                {['2023/24', '2022/23', '2021/22'].map((season, idx) => (
                     <TouchableOpacity
-                        key={season}
+                        key={idx.toString()}
                         className="py-2 px-3"
                         onPress={() => {
                             setSelectedSeason(season);
@@ -335,9 +458,9 @@ const TeamDetailScreen = () => {
         
         {leagueOpen && (
             <View className="absolute top-20 left-32 bg-white rounded-xl p-2" style={{ width: 150, elevation: 10 }}>
-                {['Premier League', 'La Liga', 'Serie A'].map((league) => (
+                {['Premier League', 'La Liga', 'Serie A'].map((league, idx) => (
                     <TouchableOpacity
-                        key={league}
+                        key={idx.toString()}
                         className="py-2 px-3"
                         onPress={() => {
                             setSelectedLeague(league);
@@ -352,9 +475,9 @@ const TeamDetailScreen = () => {
         
         {regionOpen && (
             <View className="absolute top-20 right-0 bg-white rounded-xl p-2" style={{ width: 120, elevation: 10 }}>
-                {['Region', 'Europe', 'Asia', 'America'].map((region) => (
+                {['Region', 'Europe', 'Asia', 'America'].map((region, idx) => (
                     <TouchableOpacity
-                        key={region}
+                        key={idx.toString()}
                         className="py-2 px-3"
                         onPress={() => {
                             setSelectedRegion(region);
@@ -412,28 +535,30 @@ const TeamDetailScreen = () => {
             >
 
         
-            <View className=" pb-4 bg-[#5e5e5e]">
+            <View className=" pb-4 bg-[#5e5e5e] relative">
             
                 <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center flex-1">
-                        <View className="w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center">
+                        {entityDetails?.entity?.logo_url?<View className='w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center'> 
+                            <Image source={{uri: entityDetails?.entity?.logo_url}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                        </View>: <View className="w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center">
                             <Text className="text-3xl">🏀</Text>
-                        </View>
+                        </View>}
                         <View>
-                            <Text className="text-white text-2xl font-oswald-semiBold">Lakers</Text>
-                            <Text className="text-white/60 text-sm font-oswald-medium">NAB</Text>
+                            <Text className="text-white text-xl font-oswald-semiBold">{entityDetails?.entity?.name}</Text>
+                            <Text className="text-white/60 text-sm font-oswald-medium">{entityDetails?.entity?.slug}</Text>
                         </View>
                     </View>
-                    <TouchableOpacity className="bg-[#7ac7ea] rounded-full px-6 py-3">
+                    { !(entityDetails?.entity?.in_nest) && <TouchableOpacity className="bg-[#7ac7ea] rounded-full px-6 py-3">
                         <Text className="text-white text-sm font-oswald-semiBold">Add to Nest</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity>}
                 </View>
             </View>
 
             <View className="flex-row items-center justify-between border-b border-white/20 bg-[#5e5e5e]">
-                {tabs.map((tab) => (
+                {tabs.map((tab, idx) => (
                     <TouchableOpacity
-                        key={tab}
+                        key={idx.toString()}
                         className="mr-6 pb-3"
                         onPress={() => setActiveTab(tab)}
                     >
@@ -450,6 +575,56 @@ const TeamDetailScreen = () => {
             <View className="flex-1 bg-[#5e5e5e]">
                 {renderContent()}
             </View>
+
+            {
+                searchQuery && (
+                    <View className='absolute bg-[#5e5e5e] top-0 left-0 right-0 max-h-96 rounded-br-2xl rounded-bl-2xl shadow-slate-800'>
+                        <View className='px-6 w-full'>
+                        <FlatList
+                            data={[1, 2, 3, 4, 5]}
+                            keyExtractor={(_, idx) => idx.toString()}
+                            style={{ width: '100%' }}
+                            renderItem={({ item }) => {
+                            const isSelected = false;
+                            return (
+                                <TouchableOpacity
+                                    className={`flex-row items-center border rounded-2xl p-4 mb-3 ${
+                                        isSelected ? 'border-[#7ac7ea]/90' : 'border-gray-200'
+                                    } bg-white/10`}
+                                    onPress={() => {
+                                        console.log("view");
+                                    }}
+                                    >
+                                    {false ? (
+                                        <Image
+                                        source={{ uri: "" }}
+                                        className="w-12 h-12 rounded-full mr-3"
+                                        style={{ resizeMode: 'cover' }}
+                                        />
+                                    ) : (
+                                        <View className="w-12 h-12 rounded-full bg-white mr-3" />
+                                    )}
+                                    <View className="flex-1">
+                                        <Text className="text-black text-base font-oswald-semiBold">{"name"}</Text>
+                                        <Text className="text-white text-sm font-oswald-regular">
+                                        {"type"} • {"count"}
+                                        </Text>
+                                    </View>
+                                    <TouchableOpacity
+                                        className="w-8 h-8 rounded-full items-center justify-center"
+                                        style={{ backgroundColor: isSelected ? '#7ac7ea' : 'transparent' }}
+                                        onPress={() => {}}
+                                    >
+                                        {isSelected ? <Check size={20} color="white" /> : <Plus size={24} color="#7ac7ea" />}
+                                    </TouchableOpacity>
+                                    </TouchableOpacity>
+                                );
+                            }}
+                            showsVerticalScrollIndicator={false}
+                        />
+                        </View>
+                    </View>
+                )}
 
         </WrapperComponent>
     );

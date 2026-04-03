@@ -1,7 +1,7 @@
 import api from "@/constants/Axios";
 import { CHANGE_PASS, DELETE_ACCOUNT, LOGIN, LOGOUT, REFRESH_TOKEN, REGISTER, RESEND_OTP, RESET_PASS_CONFIRM, RESET_PASS_REQ, RESET_PASS_VERIFY, VERIFY_EMAIL } from "@/constants/Path";
 import { toast } from "@/context/useToastStore";
-
+import axios from "axios";
 
 type Register = {
     full_name: string,
@@ -50,6 +50,10 @@ export const verify_email = async (payload:VerifyEmail, cb:(item:any)=>void) => 
 }
 
 export const login_user = async (payload:Login, cb:(item:any)=>void) => {
+ 
+    delete api.defaults.headers.common['Authorization'];
+    delete api.defaults.headers['Authorization'];
+  
     try {
         const res = await api.post(LOGIN, payload)
         cb(res.data)
@@ -109,6 +113,7 @@ export const confirm_reset_pass = async (payload:ResetConfirmPass, cb:(item:any)
 }
 
 export const change_pass = async (payload:ChangePass, cb:(item:any)=>void) => {
+
     try {
         const res = await api.post(CHANGE_PASS, payload)
         cb(res.data)
@@ -119,6 +124,7 @@ export const change_pass = async (payload:ChangePass, cb:(item:any)=>void) => {
 }
 
 export const logout_user = async (payload:{refresh: string}, cb:(item:any)=>void) => {
+    
     try {
         const res = await api.post(LOGOUT, payload)
         cb(res.data)

@@ -10,7 +10,7 @@ import { MainStackParamList } from '@/navigations/types';
 import { useNavigation } from '@react-navigation/native';
 import WeeklyCalendar from './WeeklyCalendar';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
-import { get_home_feed } from './HomeFeedAPI';
+import { feedback_post, get_home_feed, like_post } from './HomeFeedAPI';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
@@ -39,7 +39,8 @@ const NestFeedScreen = () => {
     const [filterOpen, setFilterOpen] = useState(false);
     const [selectedSort, setSelectedSort] = useState('');
     const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-    const [posts, setPosts] = useState<Post[]>([])
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [views, setViews] = useState<Boolean>(false);
 
     const navigation = useNavigation<NavigationProps>()
 
@@ -50,7 +51,48 @@ const NestFeedScreen = () => {
     const sortOptions = ['Latest', 'Oldest', 'Most Liked', 'Least Liked'];
     const filterOptions = ['Teams', 'Athletes', 'Leagues', 'News', 'Videos', 'Articles'];
 
-    const [activeTab, setActiveTab] = useState<string>("feed")
+    const [activeTab, setActiveTab] = useState<string>("feed");
+
+    const handle_Like = (id:number) => {
+        let query = null;
+        if(selectedFilters.length>0 && selectedSort){
+            query = `type=${selectedFilters[0].toLowerCase()}&sort=${selectedSort.toLowerCase()}`;
+        }else if(selectedFilters.length>0) {
+            query = `type=${selectedFilters[0].toLowerCase()}}`
+        }else if(selectedSort){
+            query = `sort=${selectedSort.toLowerCase()}`
+        }else {
+            query = null;
+        }
+    
+
+        like_post(id, (res) => {
+            if(res){
+                setViews(res?.data?.liked)
+                handle_get_feed_posts(query);
+            }
+        })
+    }
+
+    const handle_feedback = (id:number) => {
+        let query = null;
+        if(selectedFilters.length>0 && selectedSort){
+            query = `type=${selectedFilters[0].toLowerCase()}&sort=${selectedSort.toLowerCase()}`;
+        }else if(selectedFilters.length>0) {
+            query = `type=${selectedFilters[0].toLowerCase()}}`
+        }else if(selectedSort){
+            query = `sort=${selectedSort.toLowerCase()}`
+        }else {
+            query = null;
+        }
+    
+
+        feedback_post(id, (res) => {
+            if(res){
+                handle_get_feed_posts(query);
+            }
+        })
+    }
     
     const handle_get_feed_posts = (query: string | null) => {
         setLoadingTrue();
@@ -102,7 +144,7 @@ const NestFeedScreen = () => {
     };
 
     const renderPost = ({ item }: { item: Post }) => (
-        <View className="py-4 mb-4 border-b border-b-white">
+        <View  className="py-4 mb-4 border-b border-b-white">
             <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-row items-start flex-1">
                     <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen", {entity_id: item.id})}>
@@ -129,11 +171,15 @@ const NestFeedScreen = () => {
                     {item.thumbnail_url && <Image source={{uri:item.thumbnail_url}} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
 
                     <View className="flex-row items-center justify-end">
-                        <View className="flex-row items-center mr-5">
-                            <Heart size={22} color="#7ac7ea" fill="#7ac7ea" />
+                        <TouchableOpacity onPress={() => {
+                            handle_Like(item.id)
+                        }} className="flex-row items-center mr-5">
+                            <Heart size={22} color="#7ac7ea" fill={item.is_liked?"#7ac7ea":"#ffff"} />
                             <Text className="text-white text-base font-oswald-regular ml-2">{item.views}</Text>
-                        </View>
-                        <Bookmark size={22} color="white" />
+                        </TouchableOpacity>
+                        <Bookmark onPress={()=> {
+                            handle_feedback(item.id)
+                        }} size={22} color={item.is_bookmarked?"#7ac7ea": "white"} fill={item.is_bookmarked?"#7ac7ea": "#5e5e5e"} />
                     </View>
                 </View>
             </View>
@@ -238,9 +284,9 @@ const NestFeedScreen = () => {
 
                         {sortOpen && (
                             <View className="absolute top-16 left-0 bg-white/90 rounded-xl p-2 z-50">
-                                {sortOptions.map((option) => (
+                                {sortOptions.map((option, idx) => (
                                     <TouchableOpacity
-                                        key={option}
+                                        key={idx.toString()}
                                         className="py-2 px-4"
                                         onPress={() => {
                                             handleSort(option)
@@ -264,9 +310,9 @@ const NestFeedScreen = () => {
                                         <X size={20} color="#5e5e5e" />
                                     </TouchableOpacity>
                                 </View>
-                                {filterOptions.map((option) => (
+                                {filterOptions.map((option, idx) => (
                                     <TouchableOpacity
-                                        key={option}
+                                        key={idx.toString()}
                                         className="flex-row items-center py-2"
                                         onPress={() => toggleFilter(option)}
                                     >
@@ -293,7 +339,7 @@ const NestFeedScreen = () => {
                         <FlatList
                             data={posts}
                             renderItem={renderPost}
-                            keyExtractor={(item) => item.id.toString()}
+                            keyExtractor={(item, idx) => idx.toString()}
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingTop: 8, paddingBottom: 200 }}
                         />

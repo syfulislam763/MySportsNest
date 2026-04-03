@@ -22,7 +22,8 @@ const SignInScreen = () => {
     const navigation = useNavigation<NavigationProps>();
     const setIsAuthenticated = useAuthStore(state => state.setIsAuthenticated);
     const setAccessToken = useAuthStore((s) => s.setAccessToken);
-    const setRefreshToken = useAuthStore((s) => s.setRefreshToken)
+    const setRefreshToken = useAuthStore((s) => s.setRefreshToken);
+    const logout = useAuthStore( (s) => s.logout);
 
     const handleLogin = () => {
         
@@ -125,7 +126,10 @@ const SignInScreen = () => {
                         bgColor='bg-[#7ac7ea]'
                         borderColor='border-[#7ac7ea]'
                         titleColor='text-[white]'
-                        onPress={() => handleLogin()}
+                        onPress={() => {
+                            //logout();
+                            handleLogin()
+                        }}
                     />
 
                     <View className='h-5'></View>
