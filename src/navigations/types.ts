@@ -29,5 +29,7 @@ export type MainStackParamList = {
     YourNestSummary: undefined,
     NotificationSettings: undefined,
     ChangePassword: undefined,
-    EventDetailsScreen: undefined
+    EventDetailsScreen: {
+        id: number
+    }
 }

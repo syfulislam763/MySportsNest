@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions } from 'react-native';
 import { ArrowLeft, Search, ChevronRight, ChevronDown } from 'lucide-react-native';
@@ -13,6 +12,7 @@ import { useRoute } from '@react-navigation/native';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 import { feedback_post, get_entity_details, get_entity_feed, get_entity_fixture, get_entity_roster, get_entity_standings, get_entity_status, like_post } from './HomeFeedAPI';
 import { Check,Plus } from 'lucide-react-native';
+import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
 
 type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 type EntityIdType = RouteProp<MainStackParamList, "TeamDetailScreen">
@@ -49,6 +49,22 @@ export interface TeamProfile {
   youtube_channel_id: string;
 }
 
+type SearchEntity = {
+    id: number;
+    type: string;
+    name: string;
+    slug: string;
+    sport: string;
+    logo_url: string;
+    cover_image_url: string;
+    description: string;
+    country: string;
+    follower_count: number;
+    has_api_data: boolean;
+    in_nest: boolean;
+    created_at: string;
+};
+
 const extractDateParts = (dateInput: string) => {
   const date = new Date(dateInput);
 
@@ -67,9 +83,16 @@ const extractDateParts = (dateInput: string) => {
 
 type Tab = 'Feed' | 'Stats' | 'Roster' | 'Fixtures' | 'Standings';
 
+type TabsType = {
+    tab: Tab
+    hidden: boolean
+}
+
 const TeamDetailScreen = () => {
     const [activeTab, setActiveTab] = useState<Tab>('Feed');
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchEntity[]>([]);
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [seasonOpen, setSeasonOpen] = useState(false);
     const [leagueOpen, setLeagueOpen] = useState(false);
     const [regionOpen, setRegionOpen] = useState(false);
@@ -78,28 +101,63 @@ const TeamDetailScreen = () => {
     const [selectedRegion, setSelectedRegion] = useState('Region');
     const [posts, setPosts] = useState<Post[]>([]);
     const [entityDetails, setEntityDetails] = useState<TeamProfile>();
+    const [tabs, setTabs] = useState<Tab[]>(['Feed', 'Stats', 'Roster', 'Fixtures', 'Standings']);
+    const [viewEntity, setViewEntity] = useState(0);
+    const [isAddedToNest, setIsAddedToNest] = useState(false);
+    
 
-    console.log("entity details", JSON.stringify(entityDetails, null, 2))
+    //console.log("entity details", JSON.stringify(entityDetails, null, 2))
 
     const handle_get_entity_details = async (id:number) => {
-        setLoadingTrue();
         get_entity_details(id, (res) => {
-            setLoadingFalse();
+            const isType = res?.data?.entity?.type  ?? ""
+            if(isType == "athlete"){
+                setTabs(['Feed', 'Stats', 'Roster'])
+            }
             setEntityDetails(res.data)
             //console.log(JSON.stringify(res.data, null, 2), "df")
         })
     }
 
     useEffect(() => {
-        handle_get_entity_details(route.params.entity_id)
-    }, [])
+        handle_get_entity_details( viewEntity || route.params.entity_id)
+    }, [viewEntity])
 
+    const handle_search = (value: string) => {
+        setSearchQuery(value);
+        if (!value) {
+            setSearchResults([]);
+            return;
+        }
+        OnboardingAPI.get_trending_data(value).then((res) => {
+            const all: SearchEntity[] = [
+                ...(res?.data?.teams ?? []),
+                ...(res?.data?.athletes ?? []),
+                ...(res?.data?.leagues ?? []),
+            ];
+            setSearchResults(all);
+            const nestIds = all.filter((i) => i.in_nest).map((i) => i.id);
+            setSelectedItems((prev) => Array.from(new Set([...prev, ...nestIds])));
+        }).catch(() => {});
+    };
+
+    const toggleSearchItem = (id: number) => {
+        if (selectedItems.includes(id)) {
+            setSelectedItems((prev) => prev.filter((i) => i !== id));
+            setLoadingTrue();
+            remove_nest_entity({ entity_id: id }, () => { setLoadingFalse(); });
+        } else {
+            setSelectedItems((prev) => [...prev, id]);
+            setLoadingTrue();
+            add_nest_entity({ entity_id: id }, () => { setLoadingFalse(); });
+        }
+    };
 
     const handle_Like = (id:number) => {
    
         like_post(id, (res) => {
             if(res){
-                handle_get_entity_feed(route.params.entity_id)
+                handle_get_entity_feed(viewEntity || route.params.entity_id)
             }
         })
     }
@@ -108,7 +166,7 @@ const TeamDetailScreen = () => {
 
         feedback_post(id, (res) => {
             if(res){
-                handle_get_entity_feed(route.params.entity_id)
+                handle_get_entity_feed(viewEntity || route.params.entity_id)
             }
         })
     }
@@ -192,19 +250,19 @@ const TeamDetailScreen = () => {
     const handle_get_data = () => {
         switch (activeTab) {
             case 'Feed':
-                handle_get_entity_feed(route.params.entity_id)
+                handle_get_entity_feed(viewEntity || route.params.entity_id)
                 return;
             case 'Stats':
-                handle_get_entity_stats(route.params.entity_id)
+                handle_get_entity_stats(viewEntity || route.params.entity_id)
                 return ;
             case 'Roster':
-                handle_get_entity_roster(route.params.entity_id)
+                handle_get_entity_roster(viewEntity || route.params.entity_id)
                 return ;
             case 'Fixtures':
-                handle_get_entity_fixture(route.params.entity_id)
+                handle_get_entity_fixture(viewEntity || route.params.entity_id)
                 return;
             case 'Standings':
-                handle_get_entity_standings(route.params.entity_id)
+                handle_get_entity_standings(viewEntity || route.params.entity_id)
                 return ;
             default:
                 return null;
@@ -213,9 +271,8 @@ const TeamDetailScreen = () => {
 
     useEffect(() => {
         handle_get_data()
-    }, [activeTab])
+    }, [activeTab, viewEntity])
 
-    const tabs: Tab[] = ['Feed', 'Stats', 'Roster', 'Fixtures', 'Standings'];
 
     const renderFeedContent = () => (
             <FlatList
@@ -523,7 +580,7 @@ const TeamDetailScreen = () => {
                                     placeholder="Search to add a source for this team/league/athlete"
                                     placeholderTextColor="#a0a0a0"
                                     value={searchQuery}
-                                    onChangeText={setSearchQuery}
+                                    onChangeText={handle_search}
                                 />
                                 <View className="absolute right-4 top-3">
                                     <Search size={22} color="#5e5e5e" />
@@ -549,7 +606,13 @@ const TeamDetailScreen = () => {
                             <Text className="text-white/60 text-sm font-oswald-medium">{entityDetails?.entity?.slug}</Text>
                         </View>
                     </View>
-                    { !(entityDetails?.entity?.in_nest) && <TouchableOpacity className="bg-[#7ac7ea] rounded-full px-6 py-3">
+                    { !(entityDetails?.entity?.in_nest || isAddedToNest) && <TouchableOpacity onPress={() => {
+                        if(entityDetails?.entity?.id){
+                            add_nest_entity({entity_id: entityDetails?.entity?.id}, (res) => {
+                                setIsAddedToNest(true)
+                            })
+                        }
+                    }} className="bg-[#7ac7ea] rounded-full px-6 py-3">
                         <Text className="text-white text-sm font-oswald-semiBold">Add to Nest</Text>
                     </TouchableOpacity>}
                 </View>
@@ -581,23 +644,26 @@ const TeamDetailScreen = () => {
                     <View className='absolute bg-[#5e5e5e] top-0 left-0 right-0 max-h-96 rounded-br-2xl rounded-bl-2xl shadow-slate-800'>
                         <View className='px-6 w-full'>
                         <FlatList
-                            data={[1, 2, 3, 4, 5]}
-                            keyExtractor={(_, idx) => idx.toString()}
+                            data={searchResults}
+                            keyExtractor={(item) => String(item.id)}
                             style={{ width: '100%' }}
                             renderItem={({ item }) => {
-                            const isSelected = false;
+                            const isSelected = selectedItems.includes(item.id);
                             return (
                                 <TouchableOpacity
                                     className={`flex-row items-center border rounded-2xl p-4 mb-3 ${
                                         isSelected ? 'border-[#7ac7ea]/90' : 'border-gray-200'
                                     } bg-white/10`}
                                     onPress={() => {
-                                        console.log("view");
+                                        setSearchQuery('');
+                                        setSearchResults([]);
+                                        setViewEntity(item.id);
+                                        setIsAddedToNest(false);
                                     }}
                                     >
-                                    {false ? (
+                                    {item.logo_url ? (
                                         <Image
-                                        source={{ uri: "" }}
+                                        source={{ uri: item.logo_url }}
                                         className="w-12 h-12 rounded-full mr-3"
                                         style={{ resizeMode: 'cover' }}
                                         />
@@ -605,15 +671,15 @@ const TeamDetailScreen = () => {
                                         <View className="w-12 h-12 rounded-full bg-white mr-3" />
                                     )}
                                     <View className="flex-1">
-                                        <Text className="text-black text-base font-oswald-semiBold">{"name"}</Text>
+                                        <Text className="text-black text-base font-oswald-semiBold">{item.name}</Text>
                                         <Text className="text-white text-sm font-oswald-regular">
-                                        {"type"} • {"count"}
+                                        {item.type} • {item.follower_count}
                                         </Text>
                                     </View>
                                     <TouchableOpacity
                                         className="w-8 h-8 rounded-full items-center justify-center"
                                         style={{ backgroundColor: isSelected ? '#7ac7ea' : 'transparent' }}
-                                        onPress={() => {}}
+                                        onPress={() => toggleSearchItem(item.id)}
                                     >
                                         {isSelected ? <Check size={20} color="white" /> : <Plus size={24} color="#7ac7ea" />}
                                     </TouchableOpacity>

@@ -1,6 +1,7 @@
 
-export const BASE_URL = 'https://reads-jamie-rebates-cowboy.trycloudflare.com';
+export const BASE_URL = 'https://diary-sampling-lite-invite.trycloudflare.com';
 
+export const SOCKET_BASE_URL = 'wss://diary-sampling-lite-invite.trycloudflare.com'
 
 export const REGISTER = '/api/auth/register/'
 export const VERIFY_EMAIL = '/api/auth/verify-email/'
