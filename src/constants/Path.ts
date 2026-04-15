@@ -1,7 +1,7 @@
 
-export const BASE_URL = 'https://diary-sampling-lite-invite.trycloudflare.com';
+export const BASE_URL = 'https://experiments-retention-organ-breed.trycloudflare.com/';
 
-export const SOCKET_BASE_URL = 'wss://diary-sampling-lite-invite.trycloudflare.com'
+export const SOCKET_BASE_URL = 'wss://experiments-retention-organ-breed.trycloudflare.com/'
 
 export const REGISTER = '/api/auth/register/'
 export const VERIFY_EMAIL = '/api/auth/verify-email/'

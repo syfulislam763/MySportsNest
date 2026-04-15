@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, Switch } from 'react-native';
-import { ArrowLeft, Edit2, ChevronRight, Bell, Moon, Lock, Share2, HelpCircle, Shield, Trash2, LogOut } from 'lucide-react-native';
+import { ArrowLeft, Edit2, ChevronRight, Bell, Moon, Lock, Share2, HelpCircle, Shield, Trash2, LogOut, User, Mail } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import BackButton from '@/components/BackButton';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -21,7 +21,7 @@ const ProfileSettingsScreen = () => {
 
     const handleLogout = () => {
         // logout();
-        // return;
+        // return;  
         setLoadingTrue();
         logout_user({refresh} , res => {
             setLoadingFalse();
@@ -44,22 +44,23 @@ const ProfileSettingsScreen = () => {
     ];
 
     const personalInfo = [
-        { icon: '👤', label: 'Annette Black' },
-        { icon: '✉️', label: 'john-doe@example.com' },
+        { icon: User, label: 'Annette Black' },
+        { icon: Mail, label: 'john-doe@example.com' },
     ];
 
     const preferenceItems = [
-        { label: 'Your Nest Summary', hasArrow: true, onPress: () => {navigation.navigate("YourNestSummary")} },
+        { label: 'Your Nest Summary', hasArrow: true, onPress: () => {navigation.navigate("YourNestSummary")}, icon: "" },
         { 
             label: 'Show Live Scores', 
             subtitle: 'Enable to see live match scores in your feed.',
             hasSwitch: true,
             switchValue: showLiveScores,
-            onSwitchChange: setShowLiveScores
+            onSwitchChange: setShowLiveScores,
+            icon: ""
         },
-        { label: 'Source Management', icon: '📰', hasArrow: true, onPress: () => {} },
+        // { label: 'Source Management', icon: '📰', hasArrow: true, onPress: () => {} },
     ];
-
+    
     const generalItems = [
         { label: 'Notifications', icon: Bell, hasArrow: true, onPress: () => { navigation.navigate("NotificationSettings")} },
         // { 
@@ -80,7 +81,7 @@ const ProfileSettingsScreen = () => {
         { label: 'Logout', icon: LogOut, color: '#ef4444', onPress: () => handleLogout() },
         { label: 'Delete Account', icon: Trash2, color: '#ef4444', onPress: () => {} },
     ];
-
+    //excluding the name  of the game
     return (
         <WrapperComponent
             title=""
@@ -150,15 +151,16 @@ const ProfileSettingsScreen = () => {
                                 <Edit2 size={20} color="white" />
                             </TouchableOpacity>
                         </View>
-                        {personalInfo.map((info, index) => (
-                            <View 
+                        {personalInfo.map((info, index) => {
+                            const IconComponent = info.icon
+                            return <View 
                                 key={index}
                                 className={`flex-row items-center py-3 ${index < personalInfo.length - 1 ? 'border-b border-white/10' : ''}`}
                             >
-                                <Text className="text-2xl mr-3">{info.icon}</Text>
-                                <Text className="text-white text-base font-oswald-regular">{info.label}</Text>
+                                <IconComponent size={20} color={"white"} />
+                                <Text className="text-white text-base font-oswald-regular ml-3">{info.label}</Text>
                             </View>
-                        ))}
+                        })}
                     </View>
 
                     <View className="bg-gray-700 rounded-xl p-5 mb-6">

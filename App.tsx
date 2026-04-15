@@ -28,3 +28,13 @@ export default function App() {
     </FontLoader>
   );
 }
+
+
+
+/* 
+  - here is documentation for adding adMob in react native expo
+  - https://docs.page/invertase/react-native-google-mobile-ads~389
+ 
+
+
+*/
