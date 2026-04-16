@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, Switch } from 'react-native';
 import { ArrowLeft, Edit2, ChevronRight, Bell, Moon, Lock, Share2, HelpCircle, Shield, Trash2, LogOut, User, Mail } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
@@ -10,7 +10,15 @@ import { useAuthStore } from '@/context/useAuthStore';
 import { logout_user } from '../auth_screens/AuthAPI';
 import { toast } from '@/context/useToastStore';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
+import { set_preference } from '../onboarding_screens/onboardingApi';
+import { BASE_URL } from '@/constants/Path';
+import api from '@/constants/Axios';
 
+type PREFERENCE_TYPE = {
+    show_live_scores: boolean,
+    breaking_news_only: boolean,
+    notification_frequency: string
+}
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
 const ProfileSettingsScreen = () => {
@@ -18,6 +26,29 @@ const ProfileSettingsScreen = () => {
     const [themeEnabled, setThemeEnabled] = useState(false);
     const logout = useAuthStore(state => state.logout);
     const refresh = useAuthStore(state => state.refresh);
+    const setPreference = useAuthStore((s) => s.setPreference);
+    const preference = useAuthStore((s) => s.preference)
+
+    const setProfile = useAuthStore((s) => s.setProfile);
+    const profile = useAuthStore((s) => s.profile)
+
+    //console.log("profile", JSON.stringify(profile, null, 2))
+
+    const handlePreference = () => {
+        setLoadingTrue()
+        const payload:PREFERENCE_TYPE = {
+            show_live_scores: !(preference.show_live_scores),
+            breaking_news_only: true,
+            notification_frequency: "daily"
+        }
+
+        set_preference(payload, (res) => {
+            setLoadingFalse();
+            if(res){
+                setPreference(res);
+            }
+        })
+    }
 
     const handleLogout = () => {
         // logout();
@@ -38,14 +69,14 @@ const ProfileSettingsScreen = () => {
     const profilePic = require("../../../assets/temp/test_p1.jpg");
 
     const stats = [
-        { label: 'In Your Nest', value: '42' },
-        { label: 'Saved Posts', value: '42' },
-        { label: 'Streak', value: '12 Days', highlight: true },
+        { label: 'In Your Nest', value: profile?.nest_count ? String(profile?.nest_count) : '0' },
+        { label: 'Saved Posts', value: profile?.saved_posts_count? String(profile?.saved_posts_count) : '0' },
+        { label: 'Streak', value: profile?.daily_streak ? `${profile?.daily_streak} Days` : '0', highlight: true },
     ];
 
     const personalInfo = [
-        { icon: User, label: 'Annette Black' },
-        { icon: Mail, label: 'john-doe@example.com' },
+        { icon: User, label: profile?.full_name || profile?.full_name || 'John Doe' },
+        { icon: Mail, label: profile?.email || profile?.email || 'john-doe@example.com' },
     ];
 
     const preferenceItems = [
@@ -54,8 +85,8 @@ const ProfileSettingsScreen = () => {
             label: 'Show Live Scores', 
             subtitle: 'Enable to see live match scores in your feed.',
             hasSwitch: true,
-            switchValue: showLiveScores,
-            onSwitchChange: setShowLiveScores,
+            switchValue: preference.show_live_scores,
+            onSwitchChange: handlePreference,
             icon: ""
         },
         // { label: 'Source Management', icon: '📰', hasArrow: true, onPress: () => {} },
@@ -98,13 +129,17 @@ const ProfileSettingsScreen = () => {
                 <View className="pb-6">
                     <View className="flex-row items-center mb-6">
                         <Image 
-                            source={profilePic}
+                            source={profile?.profile_picture ? { uri: BASE_URL+profile?.profile_picture} : profilePic}
                             className="w-20 h-20 rounded-full mr-4"
                             style={{ resizeMode: 'cover' }}
                         />
                         <View className="flex-1">
-                            <Text className="text-white text-2xl font-oswald-semiBold">John Doe</Text>
-                            <Text className="text-white/70 text-sm font-oswald-regular">john-doe@example.com</Text>
+                            <Text className="text-white text-2xl font-oswald-semiBold">
+                                {profile?.full_name || profile?.full_name || 'John Doe'}
+                            </Text>
+                            <Text className="text-white/70 text-sm font-oswald-regular">
+                                {profile?.email || profile?.email || 'john-doe@example.com'}
+                            </Text>
                         </View>
                     </View>
 
@@ -174,7 +209,7 @@ const ProfileSettingsScreen = () => {
                                             <Switch
                                                 value={item.switchValue}
                                                 onValueChange={item.onSwitchChange}
-                                                trackColor={{ false: '#4b5563', true: '#7ac7ea' }}
+                                                trackColor={{ false: '#7ac7ea', true: '#7ac7ea' }}
                                                 thumbColor="white"
                                             />
                                         </View>

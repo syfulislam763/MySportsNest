@@ -11,6 +11,8 @@ import { useNavigation } from '@react-navigation/native';
 import WeeklyCalendar from './WeeklyCalendar';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 import { feedback_post, get_home_feed, like_post } from './HomeFeedAPI';
+import { useAuthStore } from '@/context/useAuthStore';
+import { BASE_URL } from '@/constants/Path';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
@@ -41,6 +43,7 @@ const NestFeedScreen = () => {
     const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
     const [posts, setPosts] = useState<Post[]>([]);
     const [views, setViews] = useState<Boolean>(false);
+    const profile = useAuthStore((s) => s.profile)
 
     const navigation = useNavigation<NavigationProps>()
 
@@ -211,7 +214,7 @@ const NestFeedScreen = () => {
                         </View>
 
                         <TouchableOpacity onPress={() => navigation.navigate("ProfileSettingsScreen")}>
-                            <Image source={profilePic} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                            <Image source={ {uri: BASE_URL+profile?.profile_picture || ""} } className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
                         </TouchableOpacity>
                 </View>}
             >

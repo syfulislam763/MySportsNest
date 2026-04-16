@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import BackButton from '@/components/BackButton';
+import { OnboardingAPI } from '../onboarding_screens/onboardingApi';
+import { remove_nest_entity } from '../onboarding_screens/onboardingApi';
+import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 
 interface NestItem {
     id: string;
@@ -11,60 +14,40 @@ interface NestItem {
     image: any;
 }
 
+interface NEST_ITEM {
+    entity: {
+        id: number;
+        name: string;
+        logo_url: string;
+    }
+}
+
 const YourNestSummary = () => {
-    const nestItems: NestItem[] = [
-        {
-            id: '1',
-            name: 'Manchester United',
-            type: 'Team',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '2',
-            name: 'New York Yankees',
-            type: 'Team',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '3',
-            name: 'Lionel Messi',
-            type: 'League',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '4',
-            name: 'FC Barcelona',
-            type: 'Team',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '5',
-            name: 'Los Angeles Lakers',
-            type: 'Team',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '6',
-            name: 'Manchester',
-            type: 'League',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '7',
-            name: 'LeBron James',
-            type: 'Athlete',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-        {
-            id: '8',
-            name: 'Cristiano Ronaldo',
-            type: 'Athlete',
-            image: require('../../../assets/temp/test_p1.jpg'),
-        },
-    ];
+    const [nestItems, setNestItems] = useState<NestItem[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await OnboardingAPI.get_nest_data()
+                const temp = (res?.data?.entities ?? []).map((it: NEST_ITEM) => ({
+                    id: String(it.entity.id),
+                    name: it.entity.name,
+                    image: it.entity.logo_url,
+                }))
+                setNestItems(temp)
+            } catch (_) {}
+        }
+        fetchData()
+    }, [])
 
     const handleDelete = (id: string) => {
-        console.log('Delete item:', id);
+        setLoadingTrue();
+        remove_nest_entity({ entity_id: Number(id) }, res => {
+            setLoadingFalse();
+            if (res) {
+                setNestItems(prev => prev.filter(item => item.id !== id));
+            }
+        })
     };
 
     return (
@@ -88,7 +71,7 @@ const YourNestSummary = () => {
                         >
                             <View className="w-12 h-12 rounded-full bg-white items-center justify-center overflow-hidden">
                                 <Image 
-                                    source={item.image}
+                                    source={typeof item.image === 'string' ? { uri: item.image } : item.image}
                                     className="w-full h-full"
                                     resizeMode="cover"
                                 />

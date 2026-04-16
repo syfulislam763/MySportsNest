@@ -161,7 +161,7 @@ const WeeklyCalendar = () => {
                                     {events.map((event) => (
                                         <TouchableOpacity
                                             key={event.id}
-                                            onPress={() => navigation.navigate('EventDetailsScreen', { id: 12444 })}//12444 | event.id
+                                            onPress={() => navigation.navigate('EventDetailsScreen', { id: event.id })}//12444 | event.id
                                             className="flex-col gap-1 items-center mb-3"
                                         >
                                             <Image

@@ -4,11 +4,25 @@ import { Camera } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import WrapperComponent from '@/components/WrapperComponent';
 import BackButton from '@/components/BackButton';
+import api from '@/constants/Axios';
+import { toast } from '@/context/useToastStore';
+import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainStackParamList } from '@/navigations/types';
+import { useNavigation } from '@react-navigation/native';
+import { useAuthStore } from '@/context/useAuthStore';
+import { BASE_URL } from '@/constants/Path';
+type NavigationProps = StackNavigationProp<MainStackParamList>
 
 const EditProfileScreen = () => {
-    const [name, setName] = useState<string>('John Doe');
+    const full_name = useAuthStore((s) => s.profile?.full_name)
+    const [name, setName] = useState<string>(full_name || "");
     const [email, setEmail] = useState<string>('john-doe@example.com');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const navigation = useNavigation<NavigationProps>()
+
+    const updateProfile = useAuthStore((s) => s.updateProfile);
+    const profile = useAuthStore( (s) => s.profile)
 
     const profilePic = require("../../../assets/temp/test_p1.jpg");
 
@@ -36,6 +50,44 @@ const EditProfileScreen = () => {
         }
     };
 
+    const handleSave = async () => {
+        setLoadingTrue();
+        try {
+            const formData = new FormData();
+            formData.append('full_name', name);
+
+            if (selectedImage) {
+                const filename = selectedImage.split('/').pop() || 'profile.jpg';
+                const match = /\.(\w+)$/.exec(filename);
+                const type = match ? `image/${match[1]}` : 'image/jpeg';
+                formData.append('profile_picture', {
+                    uri: selectedImage,
+                    name: filename,
+                    type,
+                } as any);
+            }
+
+            const res = await api.post('/api/auth/profile/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            if (res.data?.success) {
+                toast.success("Profile updated successfully");
+                updateProfile(res.data.data)
+                navigation.goBack()
+                
+            } else {
+                toast.error("Failed to update profile");
+            }
+        } catch (error) {
+            toast.error("Failed to update profile");
+        } finally {
+            setLoadingFalse();
+        }
+    };
+
     return (
         <WrapperComponent
             title=""
@@ -59,9 +111,16 @@ const EditProfileScreen = () => {
                                         className="w-full h-full"
                                         resizeMode="cover"
                                     />
-                                ) : (
-                                    <View className="w-20 h-20 rounded-full bg-gray-400" />
-                                )}
+                                ) : 
+                                    profile?.profile_picture ? 
+                                        <Image 
+                                        source={{ uri: BASE_URL+profile?.profile_picture }} 
+                                        className="w-full h-full"
+                                        resizeMode="cover"
+                                    />:<View className="w-20 h-20 rounded-full bg-gray-400" />
+                                    
+                                    
+                                }
                             </View>
                             <TouchableOpacity 
                                 onPress={pickImage}
@@ -83,7 +142,7 @@ const EditProfileScreen = () => {
                         />
                     </View>
 
-                    <View className="mb-6">
+                    {/* <View className="mb-6">
                         <Text className="text-white text-sm font-oswald-regular mb-2">Email</Text>
                         <TextInput
                             className="text-white text-base font-oswald-regular pb-2 border-b border-white/30"
@@ -94,12 +153,12 @@ const EditProfileScreen = () => {
                             keyboardType="email-address"
                             autoCapitalize="none"
                         />
-                    </View>
+                    </View> */}
                 </View>
             </ScrollView>
 
             <View className="">
-                <TouchableOpacity className="bg-[#7ac7ea] rounded-xl py-4 mb-6">
+                <TouchableOpacity onPress={handleSave} className="bg-[#7ac7ea] rounded-xl py-4 mb-6">
                     <Text className="text-white text-center text-base font-oswald-semiBold">Save Changes</Text>
                 </TouchableOpacity>
             </View>

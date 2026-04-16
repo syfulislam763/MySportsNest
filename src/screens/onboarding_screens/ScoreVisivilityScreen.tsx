@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import { StyleSheet, View , Text, TouchableOpacity, ScrollView, Switch} from 'react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import ButtonPrimary from '@/components/ButtonPrimary';
@@ -9,6 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import VerificationModal from '@/components/VarificationModal';
 import { set_preference } from './onboardingApi';
 import { useAuthStore } from '@/context/useAuthStore';
+import api from '@/constants/Axios';
+import { toast } from '@/context/useToastStore';
 
 type NavigationProps = NativeStackNavigationProp<MainStackParamList>
 
@@ -22,9 +24,24 @@ const ScoreVisibilityScreen = () => {
     const [showLiveScores, setShowLiveScores] = useState(true);
     const navigation = useNavigation<NavigationProps>();
     const logout = useAuthStore((s) => s.logout);
-    const setPreference = useAuthStore((s) => s.setPreference)
+    const setPreference = useAuthStore((s) => s.setPreference);
+    const setProfile = useAuthStore((s) => s.setProfile)
 
     const [openModal, setOpenModal] = useState(false);
+
+    useEffect(() => {
+        Promise.all([
+            api.get('/api/auth/profile-info/'),
+            api.get('/api/auth/profile/')
+        ]).then(([profileInfoRes, profileDataRes]) => {
+            setProfile({
+                ...profileInfoRes.data,
+                ...profileDataRes.data.data,
+            });
+        }).catch(() => {
+            toast.error("Failed to load profile");
+        });
+    }, []);
     
    const handleModal = () => {
         setOpenModal(true);

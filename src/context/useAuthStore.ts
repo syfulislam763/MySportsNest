@@ -12,18 +12,33 @@ type Preference = {
     sources_used: number
 }
 
+type Profile = {
+    email: string,
+    full_name: string,
+    daily_streak: number,
+    nest_count: number,
+    saved_posts_count: number,
+    phone: string | null,
+    bio: string | null,
+    profile_picture: string | null,
+    profile_completed: boolean,
+}
+
 interface AuthStore {
     user: any;
     refresh: string;
     access: string;
     isAuthenticated: boolean;
     preference: Preference,
+    profile: Profile | null,
 
     setPreference: (val:Preference) => void,
     setIsAuthenticated: (val:boolean) => void;
     setUser: (user:any) => void;
     setAccessToken: (token:string) => void;
     setRefreshToken: (token:string) => void;
+    setProfile: (val: Profile) => void;
+    updateProfile: (val: Partial<Profile>) => void;
     logout: () => void;
 }
 
@@ -32,6 +47,7 @@ export const useAuthStore = create<AuthStore>()(persist(
         user: null,
         refresh: '',
         access: '',
+        profile: null,
         preference: {
             show_live_scores: true,
             breaking_news_only: true,
@@ -49,13 +65,18 @@ export const useAuthStore = create<AuthStore>()(persist(
             return {access}
         }),
         setRefreshToken: (refresh:string) => set({refresh}),
+        setProfile: (val: Profile) => set({profile: val}),
+        updateProfile: (val: Partial<Profile>) => set(state => ({
+            profile: state.profile ? {...state.profile, ...val} : null
+        })),
         logout: () => set(state => {
             deleteHeaderToken();
             return {
                 user: null,
                 refresh: '',
                 access: '',
-                isAuthenticated: false
+                isAuthenticated: false,
+                profile: null,
             }
         })
     }),
