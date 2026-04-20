@@ -818,58 +818,7 @@ const TeamDetailScreen = () => {
                 {renderContent()}
             </View>
 
-            {
-                searchQuery && (
-                    <View className='absolute bg-[#5e5e5e] top-0 left-0 right-0 max-h-96 rounded-br-2xl rounded-bl-2xl shadow-slate-800'>
-                        <View className='px-6 w-full'>
-                        <FlatList
-                            data={searchResults}
-                            keyExtractor={(item) => String(item.id)}
-                            style={{ width: '100%' }}
-                            renderItem={({ item }) => {
-                            const isSelected = selectedItems.includes(item.id);
-                            return (
-                                <TouchableOpacity
-                                    className={`flex-row items-center border rounded-2xl p-4 mb-3 ${
-                                        isSelected ? 'border-[#7ac7ea]/90' : 'border-gray-200'
-                                    } bg-white/10`}
-                                    onPress={() => {
-                                        setSearchQuery('');
-                                        setSearchResults([]);
-                                        setViewEntity(item.id);
-                                        setIsAddedToNest(false);
-                                    }}
-                                    >
-                                    {item.logo_url ? (
-                                        <Image
-                                        source={{ uri: item.logo_url }}
-                                        className="w-12 h-12 rounded-full mr-3"
-                                        style={{ resizeMode: 'cover' }}
-                                        />
-                                    ) : (
-                                        <View className="w-12 h-12 rounded-full bg-white mr-3" />
-                                    )}
-                                    <View className="flex-1">
-                                        <Text className="text-black text-base font-oswald-semiBold">{item.name}</Text>
-                                        <Text className="text-white text-sm font-oswald-regular">
-                                        {item.type} • {item.follower_count}
-                                        </Text>
-                                    </View>
-                                    <TouchableOpacity
-                                        className="w-8 h-8 rounded-full items-center justify-center"
-                                        style={{ backgroundColor: isSelected ? '#7ac7ea' : 'transparent' }}
-                                        onPress={() => toggleSearchItem(item.id)}
-                                    >
-                                        {isSelected ? <Check size={20} color="white" /> : <Plus size={24} color="#7ac7ea" />}
-                                    </TouchableOpacity>
-                                    </TouchableOpacity>
-                                );
-                            }}
-                            showsVerticalScrollIndicator={false}
-                        />
-                        </View>
-                    </View>
-                )}
+
 
         </WrapperComponent>
     );

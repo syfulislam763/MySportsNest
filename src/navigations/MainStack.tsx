@@ -12,6 +12,8 @@ import YourNestSummary from '@/screens/profile_screens/YourNestSummary';
 import NotificationSettings from '@/screens/profile_screens/NotificationSettings';
 import ChangePassword from '@/screens/profile_screens/ChangePassword';
 import EventDetailsScreen from '@/screens/main_app_screens/EventDetailsScreen';
+import BookmarksScreen from '@/screens/profile_screens/BookmarksScreen';
+import SourceManagement from '@/screens/profile_screens/SourceManagement';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +42,10 @@ const MainStack = () => {
             <Stack.Screen name='ChangePassword' component={ChangePassword} />
 
             <Stack.Screen name='EventDetailsScreen' component={EventDetailsScreen} />
+
+            <Stack.Screen name='BookmarksScreen' component={BookmarksScreen} />
+
+            <Stack.Screen name='SourceManagement' component={SourceManagement} />
 
         </Stack.Navigator>
     );

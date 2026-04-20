@@ -31,5 +31,7 @@ export type MainStackParamList = {
     ChangePassword: undefined,
     EventDetailsScreen: {
         id: number
-    }
+    },
+    BookmarksScreen: undefined,
+    SourceManagement: undefined
 }

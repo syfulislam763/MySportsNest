@@ -13,6 +13,8 @@ import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 import { feedback_post, get_home_feed, like_post } from './HomeFeedAPI';
 import { useAuthStore } from '@/context/useAuthStore';
 import { BASE_URL } from '@/constants/Path';
+import { Check} from 'lucide-react-native';
+import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
@@ -33,9 +35,26 @@ const extractDateParts = (dateInput: string) => {
 
   return `${day} ${month} ${year}, ${time}`;
 };
+type SearchEntity = {
+    id: number;
+    type: string;
+    name: string;
+    slug: string;
+    sport: string;
+    logo_url: string;
+    cover_image_url: string;
+    description: string;
+    country: string;
+    follower_count: number;
+    has_api_data: boolean;
+    in_nest: boolean;
+    created_at: string;
+};
 
 const NestFeedScreen = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchEntity[]>([]);
+    const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [menuOpen, setMenuOpen] = useState(false);
     const [sortOpen, setSortOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -96,6 +115,18 @@ const NestFeedScreen = () => {
             }
         })
     }
+    const toggleSearchItem = (id: number) => {
+        if (selectedItems.includes(id)) {
+            setSelectedItems((prev) => prev.filter((i) => i !== id));
+            setLoadingTrue();
+            remove_nest_entity({ entity_id: id }, () => { setLoadingFalse(); });
+        } else {
+            setSelectedItems((prev) => [...prev, id]);
+            setLoadingTrue();
+            add_nest_entity({ entity_id: id }, () => { setLoadingFalse(); });
+        }
+    };
+    
     
     const handle_get_feed_posts = (query: string | null) => {
         setLoadingTrue();
@@ -108,15 +139,24 @@ const NestFeedScreen = () => {
         })
     }
 
-    const handleSearch = (value:string) => {
+
+    const handle_search = (value: string) => {
         setSearchQuery(value);
-        const search = value? `q=${value.toLowerCase()}`: null
-        get_home_feed(search, (res) => {
-            if(res){
-                setPosts(res?.data?.results ??[])
-            }
-        })
-    }
+        if (!value) {
+            setSearchResults([]);
+            return;
+        }
+        OnboardingAPI.get_trending_data(value).then((res) => {
+            const all: SearchEntity[] = [
+                ...(res?.data?.teams ?? []),
+                ...(res?.data?.athletes ?? []),
+                ...(res?.data?.leagues ?? []),
+            ];
+            setSearchResults(all);
+            const nestIds = all.filter((i) => i.in_nest).map((i) => i.id);
+            setSelectedItems((prev) => Array.from(new Set([...prev, ...nestIds])));
+        }).catch(() => {});
+    };
 
     const handleSort = (sortString:string) => {
         setLoadingTrue();
@@ -205,7 +245,7 @@ const NestFeedScreen = () => {
                                     placeholder="Search teams, athletes, leagues..."
                                     placeholderTextColor="#a0a0a0"
                                     value={searchQuery}
-                                    onChangeText={handleSearch}
+                                    onChangeText={handle_search}
                                 />
                                 <View className="absolute right-4 top-3">
                                     <Search size={22} color="#5e5e5e" />
@@ -374,6 +414,66 @@ const NestFeedScreen = () => {
                     setMenuOpen={setMenuOpen}
                     buttonPosition={{ x: width / 2, y: height - 100 }}
                 />
+
+            {
+                searchQuery && (
+                <View className='absolute bg-[#5e5e5e] top-0 left-0 right-0 max-h-96 rounded-br-2xl rounded-bl-2xl shadow-slate-800'>
+                    <View className='px-6 w-full'>
+                    <FlatList
+                        data={searchResults}
+                        keyExtractor={(item) => String(item.id)}
+                        style={{ width: '100%' }}
+                        renderItem={({ item }) => {
+                        const isSelected = selectedItems.includes(item.id);
+                        return (
+                            <TouchableOpacity
+                                className={`flex-row items-center border rounded-2xl p-4 mb-3 ${
+                                    isSelected ? 'border-[#7ac7ea]/90' : 'border-gray-200'
+                                } bg-white/10`}
+                                onPress={() => {
+                                    setSearchQuery('');
+                                    setSearchResults([]);
+                                    navigation.navigate('TeamDetailScreen', {
+                                        entity_id: Number(item.id),
+                                        logo: item.logo_url
+                                    })
+                                }}
+                                >
+                                {item.logo_url ? (
+                                    <Image
+                                    source={{ uri: item.logo_url }}
+                                    className="w-12 h-12 rounded-full mr-3"
+                                    style={{ resizeMode: 'cover' }}
+                                    />
+                                ) : (
+                                    <View className="w-12 h-12 rounded-full bg-white mr-3" />
+                                )}
+                                <View className="flex-1">
+                                    <Text className="text-black text-base font-oswald-semiBold">{item.name}</Text>
+                                    <Text className="text-white text-sm font-oswald-regular">
+                                    {item.type} • {item.follower_count}
+                                    </Text>
+                                </View>
+                                <TouchableOpacity
+                                    className="w-8 h-8 rounded-full items-center justify-center"
+                                    style={{ backgroundColor: isSelected ? '#7ac7ea' : 'transparent' }}
+                                    onPress={() => toggleSearchItem(item.id)}
+                                >
+                                    {isSelected ? <Check size={20} color="white" /> : <Plus size={24} color="#7ac7ea" />}
+                                </TouchableOpacity>
+                                </TouchableOpacity>
+                            );
+                        }}
+                        showsVerticalScrollIndicator={false}
+                    />
+                    </View>
+                </View>
+            )}
+
+
+
+
+
             </WrapperComponent>
             
             <LiveBar/>

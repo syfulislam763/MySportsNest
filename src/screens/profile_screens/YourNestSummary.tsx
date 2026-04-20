@@ -6,6 +6,8 @@ import BackButton from '@/components/BackButton';
 import { OnboardingAPI } from '../onboarding_screens/onboardingApi';
 import { remove_nest_entity } from '../onboarding_screens/onboardingApi';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
+import { useAuthStore } from '@/context/useAuthStore';
+
 
 interface NestItem {
     id: string;
@@ -24,6 +26,8 @@ interface NEST_ITEM {
 
 const YourNestSummary = () => {
     const [nestItems, setNestItems] = useState<NestItem[]>([]);
+    const nestCount = useAuthStore((s) => s.profile?.nest_count);
+    const updateProfile = useAuthStore((s) => s.updateProfile)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -46,6 +50,7 @@ const YourNestSummary = () => {
             setLoadingFalse();
             if (res) {
                 setNestItems(prev => prev.filter(item => item.id !== id));
+                updateProfile({nest_count: nestCount?nestCount-1:0})
             }
         })
     };

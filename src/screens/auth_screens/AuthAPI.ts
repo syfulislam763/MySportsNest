@@ -58,7 +58,7 @@ export const login_user = async (payload:Login, cb:(item:any)=>void) => {
         const res = await api.post(LOGIN, payload)
         cb(res.data)
     }catch(e:any){
-        console.log(JSON.stringify(e?.response, null,  2), "login user error")
+        console.log(JSON.stringify(e, null,  2), "login user error")
         cb(null);
     }
 }

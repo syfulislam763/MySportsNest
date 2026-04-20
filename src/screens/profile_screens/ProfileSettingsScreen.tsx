@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, Switch } from 'react-native';
-import { ArrowLeft, Edit2, ChevronRight, Bell, Moon, Lock, Share2, HelpCircle, Shield, Trash2, LogOut, User, Mail } from 'lucide-react-native';
+import { ArrowLeft, Edit2, ChevronRight, Bell, Moon, Lock, Share2, HelpCircle, Shield, Trash2, LogOut, User, Mail, SquareCode } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import BackButton from '@/components/BackButton';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -69,9 +69,9 @@ const ProfileSettingsScreen = () => {
     const profilePic = require("../../../assets/temp/test_p1.jpg");
 
     const stats = [
-        { label: 'In Your Nest', value: profile?.nest_count ? String(profile?.nest_count) : '0' },
-        { label: 'Saved Posts', value: profile?.saved_posts_count? String(profile?.saved_posts_count) : '0' },
-        { label: 'Streak', value: profile?.daily_streak ? `${profile?.daily_streak} Days` : '0', highlight: true },
+        { label: 'In Your Nest', value: profile?.nest_count ? String(profile?.nest_count) : '0', onPress: () => {navigation.navigate("YourNestSummary")} },
+        { label: 'Saved Posts', value: profile?.saved_posts_count? String(profile?.saved_posts_count) : '0', onPress:() => {navigation.navigate("BookmarksScreen")} },
+        { label: 'Streak', value: profile?.daily_streak ? `${profile?.daily_streak} Days` : '0', highlight: true, onPress:() => {} },
     ];
 
     const personalInfo = [
@@ -89,7 +89,7 @@ const ProfileSettingsScreen = () => {
             onSwitchChange: handlePreference,
             icon: ""
         },
-        // { label: 'Source Management', icon: '📰', hasArrow: true, onPress: () => {} },
+        { label: 'Source Management', icon: SquareCode, hasArrow: true, onPress: () => {navigation.navigate("SourceManagement")} },
     ];
     
     const generalItems = [
@@ -145,16 +145,17 @@ const ProfileSettingsScreen = () => {
 
                     <View className="flex-row items-center justify-between mb-6">
                         {stats.map((stat, index) => (
-                            <View 
+                            <TouchableOpacity 
                                 key={index}
                                 className="flex-1 border border-white/30 rounded-2xl p-4 mr-2"
                                 style={index === stats.length - 1 ? { marginRight: 0 } : {}}
+                                onPress={stat.onPress}
                             >
                                 <Text className="text-white/70 text-xs font-oswald-regular mb-1">{stat.label}</Text>
                                 <Text className={`text-2xl font-oswald-semiBold ${stat.highlight ? 'text-[#7ac7ea]' : 'text-white'}`}>
                                     {stat.value}
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                         ))}
                     </View>
 
@@ -223,7 +224,8 @@ const ProfileSettingsScreen = () => {
                                         onPress={item.onPress}
                                     >
                                         <View className="flex-row items-center flex-1">
-                                            {item.icon && <Text className="text-2xl mr-3">{item.icon}</Text>}
+                                            {item.icon && <item.icon size={20} color={"white"}/>}
+                                            {item.icon && <View className='mr-3'/>}
                                             <Text className="text-white text-base font-oswald-regular">{item.label}</Text>
                                         </View>
                                         {item.hasArrow && <ChevronRight size={20} color="white" />}

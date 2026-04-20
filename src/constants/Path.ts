@@ -1,7 +1,7 @@
 
-export const BASE_URL = 'https://routing-nearly-sponsorship-breakfast.trycloudflare.com';
+export const BASE_URL = 'https://deliver-consist-march-plymouth.trycloudflare.com';
 
-export const SOCKET_BASE_URL = 'wss://routing-nearly-sponsorship-breakfast.trycloudflare.com/'
+export const SOCKET_BASE_URL = 'wss://deliver-consist-march-plymouth.trycloudflare.com/'
 
 export const REGISTER = '/api/auth/register/'
 export const VERIFY_EMAIL = '/api/auth/verify-email/'

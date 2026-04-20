@@ -23,6 +23,7 @@
     "expo-blur": "~15.0.8",
     "expo-font": "~14.0.10",
     "expo-image-picker": "~17.0.10",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.8",
     "expo-video": "~3.0.15",
     "lucide-react-native": "^0.562.0",
