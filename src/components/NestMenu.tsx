@@ -213,10 +213,10 @@ const NestMenu: React.FC<NestMenuProps> = ({
             itemAnims[idx].scale.setValue(0)
 
             Animated.parallel([
-                Animated.timing(itemAnims[idx].x,       { toValue: finalX, duration: 600, delay: idx * 60, useNativeDriver: true }),
-                Animated.timing(itemAnims[idx].y,       { toValue: finalY, duration: 600, delay: idx * 60, useNativeDriver: true }),
-                Animated.timing(itemAnims[idx].opacity, { toValue: 1,      duration: 400, delay: idx * 60, useNativeDriver: true }),
-                Animated.spring(itemAnims[idx].scale,   { toValue: 1,                     delay: idx * 60, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].x,       { toValue: finalX, duration: 500, delay: idx * 30, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].y,       { toValue: finalY, duration: 500, delay: idx * 30, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].opacity, { toValue: 1,      duration: 500, delay: idx * 30, useNativeDriver: true }),
+                Animated.spring(itemAnims[idx].scale,   { toValue: 1,                     delay: idx * 30, useNativeDriver: true }),
             ]).start()
         }
     }, [menuOpen, circularItems])

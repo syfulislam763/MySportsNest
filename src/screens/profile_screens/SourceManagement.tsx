@@ -42,7 +42,7 @@ const SourceManagement = () => {
         try {
             await api.delete(`/api/source/${sourceId}/remove/`);
             setSources(prev => prev.filter(s => s.source_id !== sourceId));
-            toast.success('Source removed successfully.');
+            //toast.success('Source removed successfully.');
         } catch (_) {
             toast.error('Failed to remove source. Please try again.');
         } finally {

@@ -62,6 +62,8 @@ const NestFeedScreen = () => {
     const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
     const [posts, setPosts] = useState<Post[]>([]);
     const [views, setViews] = useState<Boolean>(false);
+    // tooltip: stores the post id whose tooltip is open, or null
+    const [openTooltipId, setOpenTooltipId] = useState<number | null>(null);
     const profile = useAuthStore((s) => s.profile)
 
     const navigation = useNavigation<NavigationProps>()
@@ -203,7 +205,45 @@ const NestFeedScreen = () => {
                         <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
                     </View>
                 </View>
-                <MoreVertical size={24} color="white" />
+
+                {/* Three dots with tooltip */}
+                <View style={{ position: 'relative' }}>
+                    <TouchableOpacity
+                        onPress={() => setOpenTooltipId(openTooltipId === item.id ? null : item.id)}
+                    >
+                        <MoreVertical size={24} color="white" />
+                    </TouchableOpacity>
+
+                    {openTooltipId === item.id && (
+                        <TouchableOpacity
+                            onPress={() => {
+                                setPosts((prev) => prev.filter((p) => p.id !== item.id));
+                                setOpenTooltipId(null);
+                            }}
+                            style={{
+                                position: 'absolute',
+                                top: 28,
+                                right: 15,
+                                backgroundColor: 'white',
+                                borderTopLeftRadius: 15,
+                                borderBottomRightRadius:15,
+                                paddingVertical: 8,
+                                paddingHorizontal: 14,
+                                zIndex: 999,
+                                elevation: 10,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 3 },
+                                shadowOpacity: 0.2,
+                                shadowRadius: 6,
+                                minWidth: 80,
+                            }}
+                        >
+                            <Text style={{ color: '#e53935', fontSize: 13, fontFamily: 'Oswald-Medium' }}>
+                                Hide post
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             <View className='flex-row items-center justify-between'>
@@ -325,7 +365,47 @@ const NestFeedScreen = () => {
                             </TouchableOpacity>
                         </View>
 
-                        {sortOpen && (
+                        
+                    
+
+                        <FlatList
+                            data={posts}
+                            renderItem={renderPost}
+                            keyExtractor={(item, idx) => idx.toString()}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingTop: 8, paddingBottom: 200 }}
+                            // close tooltip when scrolling
+                            onScrollBeginDrag={() => setOpenTooltipId(null)}
+                        />
+                    </View>
+                    
+                
+                
+                }
+
+
+                <TouchableOpacity 
+                    className="absolute bottom-24 w-28 h-28 rounded-full items-center justify-center"
+                    style={{
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                        elevation: 8,
+                        right: (width/2)-50
+                    }}
+                    onPress={() => setMenuOpen(true)}
+                >
+                    <Image source={nest} className="w-full h-full" style={{objectFit: 'cover'}} />
+                </TouchableOpacity>
+   
+                <NestMenu 
+                    menuOpen={menuOpen} 
+                    setMenuOpen={setMenuOpen}
+                    buttonPosition={{ x: width / 2, y: height - 100 }}
+                />
+
+                    {sortOpen && (
                             <View className="absolute top-16 left-0 bg-white/90 rounded-xl p-2 z-50">
                                 {sortOptions.map((option, idx) => (
                                     <TouchableOpacity
@@ -377,43 +457,11 @@ const NestFeedScreen = () => {
                                 </TouchableOpacity>
                             </View>
                         )}
-                    
 
-                        <FlatList
-                            data={posts}
-                            renderItem={renderPost}
-                            keyExtractor={(item, idx) => idx.toString()}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingTop: 8, paddingBottom: 200 }}
-                        />
-                    </View>
-                    
-                
-                
-                }
 
-                
 
-                <TouchableOpacity 
-                    className="absolute bottom-24 w-28 h-28 rounded-full items-center justify-center"
-                    style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 8,
-                        right: (width/2)-50
-                    }}
-                    onPress={() => setMenuOpen(true)}
-                >
-                    <Image source={nest} className="w-full h-full" style={{objectFit: 'cover'}} />
-                </TouchableOpacity>
-   
-                <NestMenu 
-                    menuOpen={menuOpen} 
-                    setMenuOpen={setMenuOpen}
-                    buttonPosition={{ x: width / 2, y: height - 100 }}
-                />
+
+
 
             {
                 searchQuery && (

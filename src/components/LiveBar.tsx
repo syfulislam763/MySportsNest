@@ -1,7 +1,6 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, Animated } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '@/context/AuthProvider';
 
 const ITEM_WIDTH = 180;
@@ -10,51 +9,8 @@ const abbr = (name: string): string =>
     name.split(' ').map((w) => w[0]?.toUpperCase() ?? '').join('');
 
 const LiveBar = () => {
-    const scrollX = useRef(new Animated.Value(0)).current;
-    const [isPaused, setIsPaused] = useState(false);
-    const currentAnimation = useRef<Animated.CompositeAnimation | null>(null);
     const insets = useSafeAreaInsets();
     const { liveScores } = useAuth();
-
-    useFocusEffect(
-        useCallback(() => {
-            if (liveScores.length <= 1) return;
-
-            const totalWidth = ITEM_WIDTH * liveScores.length;
-
-            const startAnimation = () => {
-                const currentValue = (scrollX as any)._value;
-                const remainingDistance = totalWidth - currentValue;
-                const speed = totalWidth / (liveScores.length * 3000);
-                const duration = Math.abs(remainingDistance / speed + 1000);
-
-                currentAnimation.current = Animated.loop(
-                    Animated.sequence([
-                        Animated.timing(scrollX, {
-                            toValue: -totalWidth,
-                            duration: duration,
-                            useNativeDriver: true,
-                        }),
-                        Animated.timing(scrollX, {
-                            toValue: 0,
-                            duration: 0,
-                            useNativeDriver: true,
-                        }),
-                    ])
-                );
-
-                currentAnimation.current.start();
-            };
-
-            if (!isPaused) {
-                startAnimation();
-            }
-
-            return () => {
-                currentAnimation.current?.stop();
-            };
-        }, [isPaused, liveScores.length])
-    );
 
     const renderLogo = (uri: string, side: 'left' | 'right') => {
         if (uri) {
@@ -88,8 +44,6 @@ const LiveBar = () => {
     return (
         <TouchableOpacity
             activeOpacity={1}
-            onPressIn={() => setIsPaused(true)}
-            onPressOut={() => setIsPaused(false)}
             className="absolute bottom-0 left-0 right-0 bg-[#7ac7ea]/95 px-4"
             style={{ paddingBottom: insets.bottom + 10, paddingTop: 20 }}
         >
@@ -104,29 +58,27 @@ const LiveBar = () => {
                     </View>
                 </View>
             ) : (
-                <View style={{ overflow: 'hidden' }}>
-                    <Animated.View
-                        style={{
-                            flexDirection: 'row',
-                            transform: [{ translateX: scrollX }],
-                        }}
-                    >
-                        {[...liveScores, ...liveScores].map((game, index) => (
-                            <View
-                                key={`${game.id}-${index}`}
-                                className="flex-row items-center rounded-full px-4 py-2 mr-4"
-                                style={{ width: ITEM_WIDTH }}
-                            >
-                                {renderLogo(game.home_logo, 'left')}
-                                <Text className="text-white text-sm font-oswald-bold flex-1" numberOfLines={1}>
-                                    {abbr(game.home_team)} {getScoreLabel(game)} {abbr(game.away_team)}
-                                </Text>
-                                {renderLogo(game.away_logo, 'right')}
-                                <View className="h-6 w-[1px] bg-white ml-4" />
-                            </View>
-                        ))}
-                    </Animated.View>
-                </View>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    // keyboardShouldPersistTaps="handled"
+                >
+                    {liveScores.map((game, index) => (
+                        <TouchableOpacity
+                            key={`${game.id}-${index}`}
+                            className="flex-row items-center rounded-full px-4 py-2 mr-4"
+                            style={{ width: ITEM_WIDTH }}
+                            onPress={() => {console.log("view")}}
+                        >
+                            {renderLogo(game.home_logo, 'left')}
+                            <Text className="text-white text-sm font-oswald-bold flex-1" numberOfLines={1}>
+                                {abbr(game.home_team)} {getScoreLabel(game)} {abbr(game.away_team)}
+                            </Text>
+                            {renderLogo(game.away_logo, 'right')}
+                            <View className="h-6 w-[1px] bg-white ml-4" />
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
             )}
         </TouchableOpacity>
     );

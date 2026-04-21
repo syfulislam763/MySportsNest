@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions, ActivityIndicator } from 'react-native';
 import { ArrowLeft, Search, ChevronRight, ChevronDown } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '@/navigations/types';
@@ -11,218 +11,29 @@ import BackButton from '@/components/BackButton';
 import { useRoute } from '@react-navigation/native';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 import { feedback_post, get_entity_details, get_entity_feed, get_entity_fixture, get_entity_roster, get_entity_standings, get_entity_status, like_post } from './HomeFeedAPI';
-import { Check,Plus } from 'lucide-react-native';
+import { Check, Plus, X } from 'lucide-react-native';
 import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
+import { renderFeedContent, renderStatsContent, renderRosterContent, renderFixturesContent, renderStandingsContent } from './TeamDetailsSupportComponents';
+import { Tab, SearchEntity, TeamProfile, TeamStatsData, AthleteStatsData, StandingsData, AthleteRosterData, TeamRosterData, FixturesData } from './TeamDetailsType';
+import api from '@/constants/Axios';
 
 type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 type EntityIdType = RouteProp<MainStackParamList, "TeamDetailScreen">
 
 const { width } = Dimensions.get('window');
 
-interface Entity {
-  id: number;
-  type: string;
-  name: string;
-  slug: string;
-  sport: string;
-  logo_url: string;
-  cover_image_url: string;
-  description: string;
-  country: string;
-  follower_count: number;
-  has_api_data: boolean;
-  in_nest: boolean;
-  created_at: string;
-}
-
-export interface TeamProfile {
-  entity: Entity;
-  league: string | null;
-  venue_name: string;
-  venue_city: string;
-  venue_capacity: number | null;
-  total_wins: number;
-  total_losses: number;
-  win_percentage: string;
-  website_url: string;
-  twitter_handle: string;
-  youtube_channel_id: string;
-}
-
-type SearchEntity = {
-    id: number;
-    type: string;
+// --- Source search types ---
+interface SourceResult {
     name: string;
-    slug: string;
-    sport: string;
-    logo_url: string;
-    cover_image_url: string;
+    domain: string;
     description: string;
-    country: string;
-    follower_count: number;
-    has_api_data: boolean;
-    in_nest: boolean;
-    created_at: string;
-};
-
-const extractDateParts = (dateInput: string) => {
-  const date = new Date(dateInput);
-
-  const day = date.getDate();
-  const month = date.toLocaleString('en-US', { month: 'short' }); 
-  const year = date.getFullYear();
-
-  const time = date.toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true, 
-  });
-
-  return `${day} ${month} ${year}, ${time}`;
-};
-
-type Tab = 'Feed' | 'Stats' | 'Roster' | 'Fixtures' | 'Standings';
-
-type TabsType = {
-    tab: Tab
-    hidden: boolean
+    favicon_url: string;
+    rss_url: string;
+    has_rss: boolean;
+    tags: string[];
+    source_id: number | null;
+    is_added: boolean;
 }
-
-interface StandingRow {
-    rank: number;
-    team_id: number;
-    team_name: string;
-    logo: string;
-    points: number;
-    played: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    goals_for: number;
-    goals_against: number;
-    goal_diff: number;
-    form: string;
-    is_highlighted: boolean;
-}
-
-interface StandingsData {
-    league: Entity;
-    season: string;
-    standings: StandingRow[];
-}
-
-interface FixtureEntity {
-    id: number;
-    name: string;
-    logo_url: string;
-    type: string;
-    sport: string;
-}
-
-interface Fixture {
-    id: number;
-    sport: string;
-    status: string;
-    status_detail: string;
-    home_entity: FixtureEntity;
-    away_entity: FixtureEntity;
-    league: { id: number; name: string; logo_url: string };
-    home_score: number | null;
-    away_score: number | null;
-    start_time: string;
-    venue_name: string;
-    venue_city: string;
-}
-
-interface FixturesData {
-    entity: Entity;
-    fixtures_count: number;
-    fixtures: Fixture[];
-}
-
-interface TeamStatsData {
-    team: Entity;
-    season: string;
-    stats: {
-        win: number;
-        draw: number;
-        lose: number;
-        form: string;
-        rank: number;
-        played: number;
-        points: number;
-        goal_diff: number;
-        goals_for: number;
-        goals_against: number;
-    };
-}
-
-interface AthleteStatsData {
-    athlete: Entity;
-    season: string;
-    stats: {
-        age: number | null;
-        goals: number | null;
-        height: string | null;
-        rating: number | null;
-        weight: string | null;
-        assists: number | null;
-        minutes: number | null;
-        shots_on: number | null;
-        red_cards: number | null;
-        passes_key: number | null;
-        appearances: number | null;
-        nationality: string | null;
-        shots_total: number | null;
-        passes_total: number | null;
-        yellow_cards: number | null;
-        pass_accuracy: number | null;
-        dribbles_success: number | null;
-    };
-}
-
-interface RosterPlayer {
-    id: number;
-    name: string;
-    position: string;
-    jersey_number: number | null;
-    photo: string;
-    height_cm: number | null;
-    weight_kg: number | null;
-    nationality: string;
-}
-
-interface TeamRosterData {
-    team: Entity;
-    roster_count: number;
-    roster: RosterPlayer[];
-}
-
-interface AthleteRosterData {
-    id: number;
-    name: string;
-    photo: string;
-    date_of_birth: string | null;
-    age: number | null;
-    nationality: string;
-    height_cm: number | null;
-    weight_kg: number | null;
-    current_team: Entity | null;
-    position: string;
-    jersey_number: number | null;
-    twitter: string;
-    instagram: string;
-    bio: string;
-}
-
-const FormBadge = ({ letter }: { letter: string }) => {
-    const color = letter === 'W' ? '#4ade80' : letter === 'L' ? '#f87171' : '#facc15';
-    return (
-        <View style={{ width: 18, height: 18, borderRadius: 4, backgroundColor: color, alignItems: 'center', justifyContent: 'center', marginRight: 2 }}>
-            <Text style={{ color: 'white', fontSize: 10, fontFamily: 'Oswald-Bold' }}>{letter}</Text>
-        </View>
-    );
-};
 
 const TeamDetailScreen = () => {
     const [activeTab, setActiveTab] = useState<Tab>('Feed');
@@ -246,12 +57,21 @@ const TeamDetailScreen = () => {
     const [fixturesData, setFixturesData] = useState<FixturesData | null>(null);
     const [standingsData, setStandingsData] = useState<StandingsData | null>(null);
 
+    // --- Source search state ---
+    const [sourceSearchQuery, setSourceSearchQuery] = useState('');
+    const [sourceResults, setSourceResults] = useState<SourceResult[]>([]);
+    const [sourceSearchLoading, setSourceSearchLoading] = useState(false);
+    const [addedSources, setAddedSources] = useState<{ [key: string]: number | null }>({});
+    // per-item loading: keyed by domain
+    const [itemLoading, setItemLoading] = useState<{ [key: string]: boolean }>({});
+    const sourceSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     //console.log("entity details", JSON.stringify(entityDetails, null, 2))
 
-    const handle_get_entity_details = async (id:number) => {
+    const handle_get_entity_details = async (id: number) => {
         get_entity_details(id, (res) => {
             const isType = res?.data?.entity?.type ?? ""
-            if(isType == "athlete"){
+            if (isType == "athlete") {
                 setTabs(['Feed', 'Stats', 'Roster'])
                 setEntityType('athlete')
             } else if (isType == "league") {
@@ -285,7 +105,7 @@ const TeamDetailScreen = () => {
             setSearchResults(all);
             const nestIds = all.filter((i) => i.in_nest).map((i) => i.id);
             setSelectedItems((prev) => Array.from(new Set([...prev, ...nestIds])));
-        }).catch(() => {});
+        }).catch(() => { });
     };
 
     const toggleSearchItem = (id: number) => {
@@ -300,33 +120,33 @@ const TeamDetailScreen = () => {
         }
     };
 
-    const handle_Like = (id:number) => {
-   
+    const handle_Like = (id: number) => {
+
         like_post(id, (res) => {
-            if(res){
+            if (res) {
                 handle_get_entity_feed(viewEntity || route.params.entity_id)
             }
         })
     }
-    
-    const handle_feedback = (id:number) => {
+
+    const handle_feedback = (id: number) => {
 
         feedback_post(id, (res) => {
-            if(res){
+            if (res) {
                 handle_get_entity_feed(viewEntity || route.params.entity_id)
             }
         })
     }
 
-    const handle_get_entity_feed = async (id:number) => {
+    const handle_get_entity_feed = async (id: number) => {
         //setLoadingTrue();
         get_entity_feed(id, (res) => {
             //setLoadingFalse();
             setPosts(res?.data?.results ?? [])
-            console.log(JSON.stringify(res.data, null, 2), "feed")
+            // console.log(JSON.stringify(res.data, null, 2), "feed")
         })
     }
-    const handle_get_entity_stats = async (id:number) => {
+    const handle_get_entity_stats = async (id: number) => {
         setLoadingTrue();
         get_entity_status(id, (res) => {
             setLoadingFalse();
@@ -334,7 +154,7 @@ const TeamDetailScreen = () => {
             //console.log(JSON.stringify(res.data, null, 2), "stats")
         })
     }
-    const handle_get_entity_roster = async (id:number) => {
+    const handle_get_entity_roster = async (id: number) => {
         setLoadingTrue();
         get_entity_roster(id, (res) => {
             setLoadingFalse();
@@ -343,7 +163,7 @@ const TeamDetailScreen = () => {
         })
     }
 
-    const handle_get_entity_fixture = async (id:number) => {
+    const handle_get_entity_fixture = async (id: number) => {
         setLoadingTrue();
         get_entity_fixture(id, (res) => {
             setLoadingFalse();
@@ -352,7 +172,7 @@ const TeamDetailScreen = () => {
         })
     }
 
-    const handle_get_entity_standings = async (id:number) => {
+    const handle_get_entity_standings = async (id: number) => {
         setLoadingTrue();
         get_entity_standings(id, (res) => {
             setLoadingFalse();
@@ -360,6 +180,83 @@ const TeamDetailScreen = () => {
             //console.log(JSON.stringify(res.data, null, 2), "standings")
         })
     }
+
+    // --- Source search handlers ---
+    const handle_source_search = (value: string) => {
+        setSourceSearchQuery(value);
+        if (!value.trim()) {
+            setSourceResults([]);
+            return;
+        }
+        // debounce
+        if (sourceSearchTimeout.current) clearTimeout(sourceSearchTimeout.current);
+        sourceSearchTimeout.current = setTimeout(async () => {
+            setSourceSearchLoading(true);
+            try {
+                const res = await api.get(`/api/source/search/?q=${encodeURIComponent(value)}`);
+                const results: SourceResult[] = res?.data?.results ?? [];
+                setSourceResults(results);
+                // seed local added state from api response
+                const seedMap: { [key: string]: number | null } = {};
+                results.forEach((r) => {
+                    if (r.is_added) seedMap[r.domain] = r.source_id;
+                });
+                setAddedSources((prev) => ({ ...prev, ...seedMap }));
+            } catch (e) {
+                setSourceResults([]);
+            } finally {
+                setSourceSearchLoading(false);
+            }
+        }, 400);
+    };
+
+    const handle_add_source = async (item: SourceResult) => {
+        setItemLoading((prev) => ({ ...prev, [item.domain]: true }));
+        try {
+            const body = {
+                domain: item.domain,
+                name: item.name,
+                rss_url: item.rss_url ?? '',
+                search_query: item.name,
+                favicon_url: item.favicon_url,
+            };
+            const res = await api.post('/api/source/add/', body);
+            const newSourceId = res?.data?.source_id ?? res?.data?.id ?? item.source_id;
+            setAddedSources((prev) => ({ ...prev, [item.domain]: newSourceId }));
+        } catch (e) {
+            // handle silently
+
+        } finally {
+            setItemLoading((prev) => ({ ...prev, [item.domain]: false }));
+        }
+    };
+
+    const handle_remove_source = async (item: SourceResult) => {
+        const sourceId = addedSources[item.domain] ?? item.source_id;
+        if (!sourceId) return;
+        setItemLoading((prev) => ({ ...prev, [item.domain]: true }));
+        try {
+            await api.delete(`/api/source/${sourceId}/remove/`);
+            setAddedSources((prev) => ({ ...prev, [item.domain]: null }));
+        } catch (e) {
+            // handle silently
+        } finally {
+            setItemLoading((prev) => ({ ...prev, [item.domain]: false }));
+        }
+    };
+
+    const isSourceAdded = (item: SourceResult): boolean => {
+        const localState = addedSources[item.domain];
+        // explicitly set to null means removed; undefined means we fall back to api value
+        if (localState === null) return false;
+        if (localState !== undefined) return true;
+        return item.is_added;
+    };
+
+    const closeSourceDropdown = () => {
+        setSourceSearchQuery('');
+        setSourceResults([]);
+    };
 
 
     const barcelona = require("../../../assets/img/barcelona.png")
@@ -373,16 +270,16 @@ const TeamDetailScreen = () => {
                 return;
             case 'Stats':
                 handle_get_entity_stats(viewEntity || route.params.entity_id)
-                return ;
+                return;
             case 'Roster':
                 handle_get_entity_roster(viewEntity || route.params.entity_id)
-                return ;
+                return;
             case 'Fixtures':
                 handle_get_entity_fixture(viewEntity || route.params.entity_id)
                 return;
             case 'Standings':
                 handle_get_entity_standings(viewEntity || route.params.entity_id)
-                return ;
+                return;
             default:
                 return null;
         }
@@ -392,392 +289,187 @@ const TeamDetailScreen = () => {
         handle_get_data()
     }, [activeTab, viewEntity])
 
-    console.log(":ddd:")
-
-    const renderFeedContent = () => {
-
-        if(posts.length <= 0){
-            return <View className='mt-5'>
-                <Text className='font-oswald-semiBold text-white text-sm'>No post has been found!</Text>
-            </View>
-        }
-        return (
-            <FlatList
-                data={posts}
-                renderItem={({ item }: { item: Post }) => (
-                        <View className="py-4 mb-4 border-b border-b-white">
-                            <View className="flex-row items-start justify-between mb-3">
-                                <View className="flex-row items-start flex-1">
-                                    <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen", {entity_id: item.id})}>
-                                        {item.source_logo?<Image source={{uri: item.source_logo}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />: <View className="w-12 h-12 rounded-full bg-white" ></View>}
-                                    </TouchableOpacity>
-                                    <View className="ml-3 flex-1">
-                                        <View className="flex-row items-center flex-wrap">
-                                            <Text className="text-white text-lg font-oswald-medium">{item.entity_names.length?item.entity_names[0]:""}</Text>
-                                            <Text className="text-white/60 text-sm font-oswald-regular ml-2">{"@name"}</Text>
-                                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
-                                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>
-                                        </View>
-                                        <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
-                                    </View>
-                                </View>
-                                <MoreVertical size={24} color="white" />
-                            </View>
-                
-                            <View className='flex-row items-center justify-between'>
-                                <View className='h-12 w-12'></View>
-                                <View className='flex-1 ml-3'>
-                                    <Text className="text-white text-lg font-oswald-medium mb-2 leading-6">{item.title}</Text>
-                                    <Text className="text-white text-sm font-oswald-regular mb-4 leading-5">{item.summary}</Text>
-                                    {item.thumbnail_url && <Image source={{uri:item.thumbnail_url}} className='w-full rounded-2xl mb-4' style={{height: 280, resizeMode: 'cover'}} />}
-                
-                                    <View className="flex-row items-center justify-end">
-                                        <TouchableOpacity onPress={() => {
-                                            handle_Like(item.id)
-                                        }} className="flex-row items-center mr-5">
-                                            <Heart size={22} color="#7ac7ea" fill={item.is_liked?"#7ac7ea":"#ffff"} />
-                                            <Text className="text-white text-base font-oswald-regular ml-2">{item.views}</Text>
-                                        </TouchableOpacity>
-                                        <Bookmark onPress={()=> {
-                                            handle_feedback(item.id)
-                                        }} size={22} color={item.is_bookmarked?"#7ac7ea": "white"} fill={item.is_bookmarked?"#7ac7ea": "#5e5e5e"} />
-                                    </View>
-                                </View>
-                            </View>
-                        </View>
-                    )}
-                keyExtractor={(item, idx) => idx.toString()}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
-            />
-    )
-    };
-
-    const renderStatsContent = () => {
-        if (entityType === 'team') {
-            const data = statsData as TeamStatsData | null;
-            if (!data?.stats) return null;
-            const s = data.stats;
-            return (
-                <View className="py-4">
-                    <Text className="text-white text-xl font-oswald-medium mb-4">Season {data.season} Stats</Text>
-                    <View className="bg-[#4c4c4c] rounded-2xl p-4 mb-4">
-                        <View className="flex-row justify-between mb-3">
-                            <View className="items-center flex-1">
-                                <Text className="text-white text-2xl font-oswald-bold">{s.points}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Points</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                <Text className="text-white text-2xl font-oswald-bold">#{s.rank}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Rank</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                <Text className="text-white text-2xl font-oswald-bold">{s.played}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Played</Text>
-                            </View>
-                        </View>
-                        <View className="flex-row justify-between mb-4">
-                            <View className="items-center flex-1">
-                                <Text className="text-[#4ade80] text-xl font-oswald-bold">{s.win}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Wins</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                <Text className="text-[#facc15] text-xl font-oswald-bold">{s.draw}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Draws</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                <Text className="text-[#f87171] text-xl font-oswald-bold">{s.lose}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Losses</Text>
-                            </View>
-                        </View>
-                        <View className="flex-row justify-between border-t border-white/10 pt-3 mb-4">
-                            <View className="items-center flex-1">
-                                <Text className="text-white text-lg font-oswald-bold">{s.goals_for}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Goals For</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                <Text className="text-white text-lg font-oswald-bold">{s.goals_against}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Goals Against</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                <Text className={`text-lg font-oswald-bold ${s.goal_diff >= 0 ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>{s.goal_diff > 0 ? `+${s.goal_diff}` : s.goal_diff}</Text>
-                                <Text className="text-white/60 text-xs font-oswald-regular mt-1">Goal Diff</Text>
-                            </View>
-                        </View>
-                        <View>
-                            <Text className="text-white/60 text-xs font-oswald-regular mb-2">Form</Text>
-                            <View className="flex-row">
-                                {s?.form?.split('').map((letter, i) => <FormBadge key={i} letter={letter} />)}
-                            </View>
-                        </View>
-                    </View>
-                </View>
-            );
-        }
-
-        if (entityType === 'league') {
-            const data = statsData as StandingsData | null;
-            if (!data?.standings) return null;
-            return renderStandingsTable(data.standings, data.season);
-        }
-
-        if (entityType === 'athlete') {
-            const data = statsData as AthleteStatsData | null;
-            if (!data?.stats) return null;
-            const s = data.stats;
-            const statItems = [
-                { label: 'Appearances', value: s.appearances },
-                { label: 'Goals', value: s.goals },
-                { label: 'Assists', value: s.assists },
-                { label: 'Minutes', value: s.minutes },
-                { label: 'Yellow Cards', value: s.yellow_cards },
-                { label: 'Red Cards', value: s.red_cards },
-                { label: 'Rating', value: s.rating },
-                { label: 'Shots Total', value: s.shots_total },
-                { label: 'Shots On Target', value: s.shots_on },
-                { label: 'Key Passes', value: s.passes_key },
-                { label: 'Pass Accuracy', value: s.pass_accuracy },
-                { label: 'Dribbles', value: s.dribbles_success },
-                { label: 'Age', value: s.age },
-                { label: 'Height', value: s.height },
-                { label: 'Nationality', value: s.nationality },
-            ].filter((i) => i.value !== null && i.value !== undefined);
-            return (
-                <View className="py-4">
-                    <Text className="text-white text-xl font-oswald-medium mb-4">Season {data.season} Stats</Text>
-                    <View className="bg-[#4c4c4c] rounded-2xl px-4 py-2">
-                        {statItems.map((item, idx) => (
-                            <View key={idx} className="flex-row items-center justify-between py-3 border-b border-white/10">
-                                <Text className="text-white/60 text-sm font-oswald-regular">{item.label}</Text>
-                                <Text className="text-white text-sm font-oswald-semiBold">{String(item.value)}</Text>
-                            </View>
-                        ))}
-                    </View>
-                </View>
-            );
-        }
-
-        return null;
-    };
-
-    const renderRosterContent = () => {
-        if (entityType === 'team') {
-            const data = rosterData as TeamRosterData | null;
-            const players = data?.roster ?? [];
-            return (
-                <FlatList
-                    data={players}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity className="flex-row items-center justify-between py-4 border-b border-white/20">
-                            <View className="flex-row items-center flex-1">
-                                {item.photo ? (
-                                    <Image source={{ uri: item.photo }} className="w-12 h-12 rounded-full" style={{ resizeMode: 'cover' }} />
-                                ) : (
-                                    <View className="w-12 h-12 bg-blue-500 rounded-full" />
-                                )}
-                                <View className="ml-3 flex-1">
-                                    <Text className="text-white text-base font-oswald-medium">#{item.jersey_number ?? '—'}  {item.name}</Text>
-                                    <Text className="text-white/60 text-sm font-oswald-regular">Position: {item.position}</Text>
-                                    {item.nationality ? <Text className="text-white/60 text-sm font-oswald-regular">{item.nationality}</Text> : null}
-                                </View>
-                            </View>
-                            <ChevronRight size={20} color="white" />
-                        </TouchableOpacity>
-                    )}
-                    keyExtractor={(item) => String(item.id)}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ paddingBottom: 100 }}
-                />
-            );
-        }
-
-        if (entityType === 'athlete') {
-            const data = rosterData as AthleteRosterData | null;
-            if (!data) return null;
-            return (
-                <View className="py-4">
-                    <View className="flex-row items-center mb-6">
-                        {data.photo ? (
-                            <Image source={{ uri: data.photo }} style={{ width: 72, height: 72, borderRadius: 36, resizeMode: 'cover' }} />
-                        ) : (
-                            <View className="w-18 h-18 bg-blue-500 rounded-full" />
-                        )}
-                        <View className="ml-4 flex-1">
-                            <Text className="text-white text-xl font-oswald-semiBold">{data.name}</Text>
-                            <Text className="text-white/60 text-sm font-oswald-regular">{data.position}{data.jersey_number ? ` • #${data.jersey_number}` : ''}</Text>
-                            {data.nationality ? <Text className="text-white/60 text-sm font-oswald-regular">{data.nationality}</Text> : null}
-                        </View>
-                    </View>
-                    {data.current_team && (
-                        <View className="bg-[#4c4c4c] rounded-2xl p-4 mb-4">
-                            <Text className="text-white/60 text-xs font-oswald-regular mb-3">Current Team</Text>
-                            <View className="flex-row items-center">
-                                {data.current_team.logo_url ? (
-                                    <Image source={{ uri: data.current_team.logo_url }} style={{ width: 40, height: 40, resizeMode: 'contain' }} />
-                                ) : null}
-                                <Text className="text-white text-base font-oswald-semiBold ml-3">{data.current_team.name}</Text>
-                            </View>
-                        </View>
-                    )}
-                    <View className="bg-[#4c4c4c] rounded-2xl px-4 py-2">
-                        {data.age ? <View className="flex-row justify-between py-3 border-b border-white/10"><Text className="text-white/60 text-sm font-oswald-regular">Age</Text><Text className="text-white text-sm font-oswald-semiBold">{data.age}</Text></View> : null}
-                        {data.height_cm ? <View className="flex-row justify-between py-3 border-b border-white/10"><Text className="text-white/60 text-sm font-oswald-regular">Height</Text><Text className="text-white text-sm font-oswald-semiBold">{data.height_cm} cm</Text></View> : null}
-                        {data.weight_kg ? <View className="flex-row justify-between py-3 border-b border-white/10"><Text className="text-white/60 text-sm font-oswald-regular">Weight</Text><Text className="text-white text-sm font-oswald-semiBold">{data.weight_kg} kg</Text></View> : null}
-                        {data.bio ? <View className="py-3"><Text className="text-white/60 text-xs font-oswald-regular mb-1">Bio</Text><Text className="text-white text-sm font-oswald-regular">{data.bio}</Text></View> : null}
-                    </View>
-                </View>
-            );
-        }
-
-        return null;
-    };
-
-    const renderFixturesContent = () => {
-        const fixtures = fixturesData?.fixtures ?? [];
-        return (
-            <FlatList
-                data={fixtures}
-                renderItem={({ item }) => (
-                    <View className="bg-[#4c4c4c] rounded-2xl p-4 mt-4">
-                        <View className="flex-row items-center justify-between mb-4">
-                            <Text className="text-white text-sm font-oswald-regular">{item.league.name}</Text>
-                            <Text className="text-white text-sm font-oswald-regular">{extractDateParts(item.start_time)}</Text>
-                        </View>
-                        <View className="flex-row items-center justify-between">
-                            <View className="items-center flex-1">
-                                {item.home_entity.logo_url ? (
-                                    <Image source={{ uri: item.home_entity.logo_url }} style={{ width: 56, height: 56, resizeMode: 'contain' }} className="mb-2" />
-                                ) : (
-                                    <View className="w-14 h-14 bg-white rounded-xl items-center justify-center mb-2" />
-                                )}
-                                <Text className="text-white text-sm font-oswald-regular text-center">{item.home_entity.name}</Text>
-                            </View>
-                            <View className="mx-4 items-center">
-                                {item.home_score !== null && item.away_score !== null ? (
-                                    <Text className="text-white text-2xl font-oswald-semiBold">{item.home_score} - {item.away_score}</Text>
-                                ) : (
-                                    <Text className="text-white text-2xl font-oswald-semiBold">vs</Text>
-                                )}
-                                <Text className="text-white/50 text-xs font-oswald-regular mt-1">{item.status_detail}</Text>
-                            </View>
-                            <View className="items-center flex-1">
-                                {item.away_entity.logo_url ? (
-                                    <Image source={{ uri: item.away_entity.logo_url }} style={{ width: 56, height: 56, resizeMode: 'contain' }} className="mb-2" />
-                                ) : (
-                                    <View className="w-14 h-14 bg-white rounded-xl items-center justify-center mb-2" />
-                                )}
-                                <Text className="text-white text-sm font-oswald-regular text-center">{item.away_entity.name}</Text>
-                            </View>
-                        </View>
-                        {item.venue_name ? (
-                            <Text className="text-white/40 text-xs font-oswald-regular text-center mt-3">{item.venue_name}{item.venue_city ? `, ${item.venue_city}` : ''}</Text>
-                        ) : null}
-                    </View>
-                )}
-                keyExtractor={(item) => String(item.id)}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
-            />
-        );
-    };
-
-    const renderStandingsTable = (rows: StandingRow[], season?: string) => (
-        <FlatList
-            data={rows}
-            ListHeaderComponent={() => (
-                <>
-                    {season ? <Text className="text-white/60 text-xs font-oswald-regular py-2">Season {season}</Text> : null}
-                    <View className="flex-row items-center py-3 border-b border-white/20">
-                        <Text className="text-white/60 text-xs font-oswald-medium w-6 text-center">#</Text>
-                        <Text className="text-white/60 text-xs font-oswald-medium flex-1 ml-2">TEAM</Text>
-                        <Text className="text-white/60 text-xs font-oswald-medium w-10 text-center">P</Text>
-                        <Text className="text-white/60 text-xs font-oswald-medium w-10 text-center">W</Text>
-                        <Text className="text-white/60 text-xs font-oswald-medium w-10 text-center">D</Text>
-                        <Text className="text-white/60 text-xs font-oswald-medium w-10 text-center">L</Text>
-                        <Text className="text-white/60 text-xs font-oswald-medium w-10 text-center">Pts</Text>
-                    </View>
-                </>
-            )}
-            renderItem={({ item }) => (
-                <View className={`flex-row items-center py-3 border-b border-white/20 ${item.is_highlighted ? 'bg-[#7ac7ea]/10 rounded-xl' : ''}`}>
-                    <Text className="text-white/60 text-xs font-oswald-regular w-6 text-center">{item.rank}</Text>
-                    <View className="flex-row items-center flex-1 ml-2">
-                        {item.logo ? (
-                            <Image source={{ uri: item.logo }} style={{ width: 24, height: 24, resizeMode: 'contain' }} className="mr-2" />
-                        ) : (
-                            <View className="w-6 h-6 rounded-full bg-white/20 mr-2" />
-                        )}
-                        <Text className={`text-sm font-oswald-medium flex-1 ${item.is_highlighted ? 'text-[#7ac7ea]' : 'text-white'}`} numberOfLines={1}>{item.team_name}</Text>
-                    </View>
-                    <Text className="text-white text-xs font-oswald-regular w-10 text-center">{item.played}</Text>
-                    <Text className="text-white text-xs font-oswald-regular w-10 text-center">{item.wins}</Text>
-                    <Text className="text-white text-xs font-oswald-regular w-10 text-center">{item.draws}</Text>
-                    <Text className="text-white text-xs font-oswald-regular w-10 text-center">{item.losses}</Text>
-                    <Text className="text-white text-xs font-oswald-bold w-10 text-center">{item.points}</Text>
-                </View>
-            )}
-            keyExtractor={(item) => String(item.team_id)}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
-        />
-    );
-
-    const renderStandingsContent = () => {
-        const data = standingsData;
-        if (!data?.standings) return null;
-        return renderStandingsTable(data.standings, data.season);
-    };
 
     const renderContent = () => {
         switch (activeTab) {
             case 'Feed':
-                return renderFeedContent();
+                return renderFeedContent({ posts, handle_like: handle_Like, handle_feedback });
             case 'Stats':
-                return renderStatsContent();
+                return renderStatsContent({ entityType, statsData });
             case 'Roster':
-                return renderRosterContent();
+                return renderRosterContent({ entityType, rosterData });
             case 'Fixtures':
-                return renderFixturesContent();
+                return renderFixturesContent({ fixturesData });
             case 'Standings':
-                return renderStandingsContent();
+                return renderStandingsContent({ standingsData });
             default:
                 return null;
         }
     };
 
+    console.log("search", JSON.stringify(sourceResults, null, 2))
+    // whether dropdown should be visible
+    const showDropdown = sourceSearchQuery.trim().length > 0 && (sourceSearchLoading || sourceResults.length > 0);
+
     return (
         <WrapperComponent
-                title={""}
-                bg_color={"bg-[#5e5e5e]"}
-                container_bg={"bg-[#5e5e5e]"}
-                headerComponent={() => <View className="flex-row items-center justify-between mb-4 mx-5">
-                        <BackButton/>
-                        <View className="flex-1">
-                            <View className=" mx-2">
-                                <TextInput
-                                    className="bg-white rounded-xl px-2 py-3 pr-12 text-sm font-oswald-regular"
-                                    placeholder="Search to add a source for this team/league/athlete"
-                                    placeholderTextColor="#a0a0a0"
-                                    value={searchQuery}
-                                    onChangeText={handle_search}
-                                />
-                                <View className="absolute right-4 top-3">
+            title={""}
+            bg_color={"bg-[#5e5e5e]"}
+            container_bg={"bg-[#5e5e5e]"}
+            headerComponent={() => (
+                <View className="mb-4 mx-5">
+                    <View className="flex-row items-center justify-between">
+                        <BackButton />
+                        <View className="flex-1 mx-2">
+
+                            {/* Search input */}
+                            <TextInput
+                                className="bg-white rounded-xl px-2 py-3 pr-12 text-sm font-oswald-regular"
+                                placeholder="Search to add a source for this team/league/athlete"
+                                placeholderTextColor="#a0a0a0"
+                                value={sourceSearchQuery}
+                                onChangeText={handle_source_search}
+                            />
+                            {/* Right icon: spinner while fetching, X to clear, or magnifier */}
+                            <View className="absolute right-4 top-3">
+                                {sourceSearchLoading ? (
+                                    <ActivityIndicator size="small" color="#5e5e5e" />
+                                ) : sourceSearchQuery.length > 0 ? (
+                                    <TouchableOpacity onPress={closeSourceDropdown}>
+                                        <X size={20} color="#5e5e5e" />
+                                    </TouchableOpacity>
+                                ) : (
                                     <Search size={22} color="#5e5e5e" />
-                                </View>
+                                )}
                             </View>
+
                         </View>
+                    </View>
+                </View>
+            )}
+        >
 
-                </View>}
-            >
+            {/* ---- Floating source search dropdown — absolutely over all screen content ---- */}
+            {showDropdown && (
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        zIndex: 9999,
+                        elevation: 20,
+                        maxHeight: 480,
+                        backgroundColor: '#3a3a3a',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 6 },
+                        shadowOpacity: 0.45,
+                        shadowRadius: 12,
+                        borderBottomLeftRadius: 20,
+                        borderBottomRightRadius: 20,
+                    }}
+                >
+                    {sourceSearchLoading ? (
+                        null
+                    ) : (
+                        <FlatList
+                            data={sourceResults}
+                            keyExtractor={(item) => item.domain}
+                            contentContainerStyle={{ padding: 10 }}
+                            showsVerticalScrollIndicator={false}
+                            nestedScrollEnabled
+                            keyboardShouldPersistTaps="handled"
+                            renderItem={({ item }) => {
+                                const added = isSourceAdded(item);
+                                const loading = !!itemLoading[item.domain];
+                                return (
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            alignItems: 'flex-start',
+                                            borderRadius: 16,
+                                            padding: 12,
+                                            marginBottom: 8,
+                                            borderWidth: 1,
+                                            borderColor: added ? 'rgba(122,199,234,0.5)' : 'rgba(255,255,255,0.1)',
+                                            backgroundColor: added ? 'rgba(122,199,234,0.08)' : 'rgba(255,255,255,0.05)',
+                                        }}
+                                    >
+                                        {/* Favicon */}
+                                        {item.favicon_url ? (
+                                            <Image
+                                                source={{ uri: item.favicon_url }}
+                                                style={{ width: 40, height: 40, borderRadius: 10, marginRight: 12, resizeMode: 'cover' }}
+                                            />
+                                        ) : (
+                                            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', marginRight: 12 }} />
+                                        )}
 
-        
+                                        {/* Name + domain */}
+                                        <View style={{ flex: 1, marginRight: 8 }}>
+                                            <Text
+                                                style={{ color: 'white', fontSize: 14, fontFamily: 'Oswald-SemiBold' }}
+                                                numberOfLines={1}
+                                            >
+                                                {item.name}
+                                            </Text>
+                                            <Text
+                                                style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, fontFamily: 'Oswald-Regular', marginTop: 2 }}
+                                                numberOfLines={1}
+                                            >
+                                                {item.domain.replace('https://', '').replace('http://', '')}
+                                            </Text>
+                                            <View className='flex-row flex-wrap gap-1 mt-2'> 
+                                                {(item?.tags ?? []).map(tag => {
+                                                    return <Text className='bg-[#5e5e5e] font-oswald-regular text-[#f2f2f2] text-sm  rounded-xl p-1'>{tag}</Text>
+                                                })}
+                                            </View>
+
+                                            <Text className='font-oswald-regular text-[#f2f2f2] mt-1' style={{fontSize:11}}>
+                                                {item.description}
+                                            </Text>
+                                        </View>
+
+                                        {/* Add / Remove button with per-item spinner */}
+                                        <TouchableOpacity
+                                            disabled={loading}
+                                            style={{
+                                                width: 36,
+                                                height: 36,
+                                                borderRadius: 18,
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: added ? '#7ac7ea' : 'transparent',
+                                                borderWidth: added ? 0 : 1.5,
+                                                borderColor: '#7ac7ea',
+                                                opacity: loading ? 0.7 : 1,
+                                            }}
+                                            onPress={() => added ? handle_remove_source(item) : handle_add_source(item)}
+                                        >
+                                            {loading ? (
+                                                <ActivityIndicator size="small" color={added ? 'white' : '#7ac7ea'} />
+                                            ) : added ? (
+                                                <Check size={16} color="white" />
+                                            ) : (
+                                                <Plus size={18} color="#7ac7ea" />
+                                            )}
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            }}
+                        />
+                    )}
+                </View>
+            )}
+            {/* ---- End floating source search dropdown ---- */}
+
             <View className=" pb-4 bg-[#5e5e5e] relative">
-            
+
                 <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center flex-1">
-                        {entityDetails?.entity?.logo_url?<View className='w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center'> 
-                            <Image source={{uri: entityDetails?.entity?.logo_url}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
-                        </View>: <View className="w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center">
+                        {entityDetails?.entity?.logo_url ? <View className='w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center'>
+                            <Image source={{ uri: entityDetails?.entity?.logo_url }} className="w-12 h-12 rounded-full" style={{ resizeMode: 'cover' }} />
+                        </View> : <View className="w-16 h-16 bg-white rounded-2xl mr-3 items-center justify-center">
                             <Text className="text-3xl">🏀</Text>
                         </View>}
                         <View>
@@ -785,9 +477,9 @@ const TeamDetailScreen = () => {
                             <Text className="text-white/60 text-sm font-oswald-medium">{entityDetails?.entity?.slug}</Text>
                         </View>
                     </View>
-                    { !(entityDetails?.entity?.in_nest || isAddedToNest) && <TouchableOpacity onPress={() => {
-                        if(entityDetails?.entity?.id){
-                            add_nest_entity({entity_id: entityDetails?.entity?.id}, (res) => {
+                    {!(entityDetails?.entity?.in_nest || isAddedToNest) && <TouchableOpacity onPress={() => {
+                        if (entityDetails?.entity?.id) {
+                            add_nest_entity({ entity_id: entityDetails?.entity?.id }, (res) => {
                                 setIsAddedToNest(true)
                             })
                         }
@@ -818,11 +510,9 @@ const TeamDetailScreen = () => {
                 {renderContent()}
             </View>
 
-
-
         </WrapperComponent>
     );
-    
+
 };
 
 export default TeamDetailScreen;

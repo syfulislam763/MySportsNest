@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, Switch } from 'react-native';
 import { ArrowLeft, Edit2, ChevronRight, Bell, Moon, Lock, Share2, HelpCircle, Shield, Trash2, LogOut, User, Mail, SquareCode } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import BackButton from '@/components/BackButton';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '@/navigations/types';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '@/context/useAuthStore';
 import { logout_user } from '../auth_screens/AuthAPI';
 import { toast } from '@/context/useToastStore';
@@ -31,6 +31,22 @@ const ProfileSettingsScreen = () => {
 
     const setProfile = useAuthStore((s) => s.setProfile);
     const profile = useAuthStore((s) => s.profile)
+
+    useFocusEffect(
+        useCallback(() => {
+            Promise.all([
+            api.get('/api/auth/profile-info/'),
+            api.get('/api/auth/profile/')
+        ]).then(([profileInfoRes, profileDataRes]) => {
+            setProfile({
+                ...profileInfoRes.data,
+                ...profileDataRes.data.data,
+            });
+        }).catch(() => {
+            toast.error("Failed to load profile");
+        });
+        }, [])
+    )
 
     //console.log("profile", JSON.stringify(profile, null, 2))
 
