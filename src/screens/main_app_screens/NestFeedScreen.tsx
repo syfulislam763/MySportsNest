@@ -387,11 +387,7 @@ const NestFeedScreen = () => {
                 <TouchableOpacity 
                     className="absolute bottom-24 w-28 h-28 rounded-full items-center justify-center"
                     style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 8,
+                       
                         right: (width/2)-50
                     }}
                     onPress={() => setMenuOpen(true)}

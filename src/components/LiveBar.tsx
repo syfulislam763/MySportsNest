@@ -2,7 +2,10 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthProvider';
-
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MainStackParamList } from '@/navigations/types';
+import { useNavigation } from '@react-navigation/native';
+type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 const ITEM_WIDTH = 180;
 
 const abbr = (name: string): string =>
@@ -11,6 +14,7 @@ const abbr = (name: string): string =>
 const LiveBar = () => {
     const insets = useSafeAreaInsets();
     const { liveScores } = useAuth();
+    const navigation = useNavigation<NavigationPropsType>()
 
     const renderLogo = (uri: string, side: 'left' | 'right') => {
         if (uri) {
@@ -68,7 +72,7 @@ const LiveBar = () => {
                             key={`${game.id}-${index}`}
                             className="flex-row items-center rounded-full px-4 py-2 mr-4"
                             style={{ width: ITEM_WIDTH }}
-                            onPress={() => {console.log("view")}}
+                            onPress={() => {navigation.navigate("LiveScoreDetail", {matchId:game.id})}}
                         >
                             {renderLogo(game.home_logo, 'left')}
                             <Text className="text-white text-sm font-oswald-bold flex-1" numberOfLines={1}>

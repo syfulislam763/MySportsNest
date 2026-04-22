@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
     StyleSheet, View, TouchableOpacity, Image, Text,
-    Animated, Dimensions, PanResponder, Modal
+    Animated, Dimensions, PanResponder, Modal, Platform
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useFocusEffect } from '@react-navigation/native';
@@ -213,10 +213,10 @@ const NestMenu: React.FC<NestMenuProps> = ({
             itemAnims[idx].scale.setValue(0)
 
             Animated.parallel([
-                Animated.timing(itemAnims[idx].x,       { toValue: finalX, duration: 500, delay: idx * 30, useNativeDriver: true }),
-                Animated.timing(itemAnims[idx].y,       { toValue: finalY, duration: 500, delay: idx * 30, useNativeDriver: true }),
-                Animated.timing(itemAnims[idx].opacity, { toValue: 1,      duration: 500, delay: idx * 30, useNativeDriver: true }),
-                Animated.spring(itemAnims[idx].scale,   { toValue: 1,                     delay: idx * 30, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].x,       { toValue: finalX, duration: 500, delay: idx * 60, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].y,       { toValue: finalY, duration: 500, delay: idx * 60, useNativeDriver: true }),
+                Animated.timing(itemAnims[idx].opacity, { toValue: 1,      duration: 500, delay: idx * 60, useNativeDriver: true }),
+                Animated.spring(itemAnims[idx].scale,   { toValue: 1,                     delay: idx * 60, useNativeDriver: true }),
             ]).start()
         }
     }, [menuOpen, circularItems])
@@ -262,7 +262,11 @@ const NestMenu: React.FC<NestMenuProps> = ({
             animationType="fade"
             onRequestClose={() => setMenuOpen(false)}
         >
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            {Platform.OS === 'ios' ? (
+                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            ) : (
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.75)' }]} />
+            )}
 
             <TouchableOpacity
                 style={StyleSheet.absoluteFill}
@@ -357,7 +361,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
         borderRadius: 45,
-        backgroundColor: '#ffffff60',
+        //backgroundColor: '#ffffff60',
         alignItems: 'center',
         justifyContent: 'center',
     },

@@ -14,7 +14,8 @@ import ChangePassword from '@/screens/profile_screens/ChangePassword';
 import EventDetailsScreen from '@/screens/main_app_screens/EventDetailsScreen';
 import BookmarksScreen from '@/screens/profile_screens/BookmarksScreen';
 import SourceManagement from '@/screens/profile_screens/SourceManagement';
-
+import LiveScoreDetail from '@/screens/main_app_screens/LiveScoreDetail';
+//fdfdffdf f d fds fsf dsf dsf dsfds,  hello d
 const Stack = createNativeStackNavigator();
 
 const MainStack = () => {
@@ -46,6 +47,8 @@ const MainStack = () => {
             <Stack.Screen name='BookmarksScreen' component={BookmarksScreen} />
 
             <Stack.Screen name='SourceManagement' component={SourceManagement} />
+
+            <Stack.Screen name='LiveScoreDetail' component={LiveScoreDetail} />
 
         </Stack.Navigator>
     );

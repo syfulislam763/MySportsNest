@@ -33,5 +33,8 @@ export type MainStackParamList = {
         id: number
     },
     BookmarksScreen: undefined,
-    SourceManagement: undefined
+    SourceManagement: undefined,
+    LiveScoreDetail: {
+        matchId: string | number | null
+    }
 }
