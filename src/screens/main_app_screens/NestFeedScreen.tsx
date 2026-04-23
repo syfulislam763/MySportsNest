@@ -77,6 +77,8 @@ const NestFeedScreen = () => {
 
     const [activeTab, setActiveTab] = useState<string>("feed");
 
+    console.log("posts", JSON.stringify(posts, null, 2))
+
     const handle_Like = (id:number) => {
         let query = null;
         if(selectedFilters.length>0 && selectedSort){
@@ -145,7 +147,7 @@ const NestFeedScreen = () => {
     const handle_search = (value: string) => {
         setSearchQuery(value);
         if (!value) {
-            setSearchResults([]);
+            setSearchResults([]);///iijdfjdfdjfdjfjdsjfdsjfjdsf
             return;
         }
         OnboardingAPI.get_trending_data(value).then((res) => {
@@ -192,15 +194,15 @@ const NestFeedScreen = () => {
         <View  className="py-4 mb-4 border-b border-b-white">
             <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-row items-start flex-1">
-                    <TouchableOpacity onPress={() => navigation.navigate("TeamDetailScreen", {entity_id: item.id})}>
+                    <TouchableOpacity onPress={() => {}}>
                         {item.source_logo?<Image source={{uri: item.source_logo}} className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />: <View className="w-12 h-12 rounded-full bg-white" ></View>}
                     </TouchableOpacity>
                     <View className="ml-3 flex-1">
                         <View className="flex-row items-center flex-wrap">
-                            <Text className="text-white text-lg font-oswald-medium">{item.entity_names.length?item.entity_names[0]:""}</Text>
+                            <Text className="text-white text-lg font-oswald-medium">{item.source_name}</Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-2">{"@name"}</Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
-                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>
+                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>jjjdjj
                         </View>
                         <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
                     </View>

@@ -29,7 +29,7 @@ const SignInScreen = () => {
         
 
         if(!email){
-            toast.info("Email is missing", 3000)
+            toast.info("Email is missing", 1000)
         }else if(!password){
             toast.info("Password is missing", 3000)
         }
@@ -112,7 +112,7 @@ const SignInScreen = () => {
                             className="absolute right-0 bottom-2"
                             onPress={() => setShowPassword(!showPassword)}
                         >   
-                            {showPassword?<EyeOff size={30}/>: <Eye size={30}/>}
+                            {!showPassword?<EyeOff size={30}/>: <Eye size={30}/>}
                         </TouchableOpacity>
                         </View>
                     </View>

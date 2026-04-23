@@ -38,7 +38,7 @@ type AddToNestModalProps = {
 };
 
 const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) => {
-    const [activeTab, setActiveTab] = useState('Trending Teams');
+    const [activeTab, setActiveTab] = useState('Teams');
     const [filterItem, setFilterItem] = useState('teams');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
@@ -46,9 +46,9 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
     const insets = useSafeAreaInsets();
 
     const tabs = [
-        { label: 'Trending Teams', key: 'teams' },
-        { label: 'Popular Athletes', key: 'athletes' },
-        { label: 'Leagues by Region', key: 'leagues' },
+        { label: 'Teams', key: 'teams' },
+        { label: 'Athletes', key: 'athletes' },
+        { label: 'Leagues', key: 'leagues' },
     ];
 
     const fetchAll = async () => {

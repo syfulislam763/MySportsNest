@@ -212,7 +212,7 @@ const TeamDetailScreen = () => {
 
     const handle_add_source = async (item: SourceResult) => {
         setItemLoading((prev) => ({ ...prev, [item.domain]: true }));
-        try {
+        try {                                                                                             
             const body = {
                 domain: item.domain,
                 name: item.name,

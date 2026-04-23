@@ -1,7 +1,7 @@
 
-export const BASE_URL = 'https://potentially-chambers-core-display.trycloudflare.com';
+export const BASE_URL = 'https://kelly-along-virginia-papers.trycloudflare.com';
 
-export const SOCKET_BASE_URL = 'wss://potentially-chambers-core-display.trycloudflare.com/'
+export const SOCKET_BASE_URL = 'wss://kelly-along-virginia-papers.trycloudflare.com/'
 
 export const REGISTER = '/api/auth/register/'
 export const VERIFY_EMAIL = '/api/auth/verify-email/'
