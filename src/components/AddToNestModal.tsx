@@ -5,6 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
 import { setLoadingTrue, setLoadingFalse } from '@/context/useLoadingStore';
+import api from '@/constants/Axios';
+import { toast } from '@/context/useToastStore';
+import { useAuthStore } from '@/context/useAuthStore';
+
 
 type TrendingItem = {
     id: number;
@@ -45,6 +49,8 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
     const [trendingData, setTrendingData] = useState<any>({});
     const insets = useSafeAreaInsets();
 
+    const setProfile = useAuthStore((s) => s.setProfile)
+
     const tabs = [
         { label: 'Teams', key: 'teams' },
         { label: 'Athletes', key: 'athletes' },
@@ -69,11 +75,18 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
     };
 
     const handle_search = (value: string) => {
-        setSearchQuery(value);
         OnboardingAPI.get_trending_data(value || null).then(res => {
             if (res?.data) setTrendingData(res.data);
         }).catch(() => {});
     };
+
+    useEffect(()=> {
+        if (!searchQuery.trim()) return;
+        const delayDebounceFn = setTimeout(() => {
+            handle_search(searchQuery);
+        }, 500); 
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery])
 
     const toggleItem = (id: number) => {
         if (selectedItems.includes(id)) {
@@ -89,6 +102,19 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
                 setLoadingFalse()
             });
         }
+
+
+        Promise.all([
+            api.get('/api/auth/profile-info/'),
+            api.get('/api/auth/profile/')
+        ]).then(([profileInfoRes, profileDataRes]) => {
+            setProfile({
+                ...profileInfoRes.data,
+                ...profileDataRes.data.data,
+            });
+        }).catch(() => {
+            toast.error("Failed to load profile");
+        });
     };
 
     useEffect(() => {
@@ -153,7 +179,7 @@ const AddToNestModal = ({ visible, onClose, onConfirm }: AddToNestModalProps) =>
                                 placeholder="Search teams, athletes, leagues..."
                                 placeholderTextColor="#a0a0a0"
                                 value={searchQuery}
-                                onChangeText={handle_search}
+                                onChangeText={(e) => setSearchQuery(e)}
                             />
                             <Search size={20} color="#a0a0a0" />
                         </View>

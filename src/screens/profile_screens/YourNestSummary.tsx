@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
 import BackButton from '@/components/BackButton';
@@ -26,6 +26,7 @@ interface NEST_ITEM {
 
 const YourNestSummary = () => {
     const [nestItems, setNestItems] = useState<NestItem[]>([]);
+    const [loading, setLoading] = useState(true); // ← added
     const nestCount = useAuthStore((s) => s.profile?.nest_count);
     const updateProfile = useAuthStore((s) => s.updateProfile)
 
@@ -40,6 +41,9 @@ const YourNestSummary = () => {
                 }))
                 setNestItems(temp)
             } catch (_) {}
+            finally {
+                setLoading(false); // ← added
+            }
         }
         fetchData()
     }, [])
@@ -67,40 +71,56 @@ const YourNestSummary = () => {
                 </View>
             )}
         >
-            <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-                <View className="flex-1">
-                    {nestItems.map((item) => (
-                        <View
-                            key={item.id}
-                            className="flex-row items-center bg-[#4a4a4a] rounded-xl p-4 mb-3"
-                        >
-                            <View className="w-12 h-12 rounded-full bg-white items-center justify-center overflow-hidden">
-                                <Image 
-                                    source={typeof item.image === 'string' ? { uri: item.image } : item.image}
-                                    className="w-full h-full"
-                                    resizeMode="cover"
-                                />
-                            </View>
-
-                            <View className="flex-1 ml-4">
-                                <Text className="text-white text-base font-oswald-semiBold">
-                                    {item.name}
-                                </Text>
-                                <Text className="text-gray-400 text-sm font-oswald-regular mt-0.5">
-                                    {item.type}
-                                </Text>
-                            </View>
-
-                            <TouchableOpacity
-                                onPress={() => handleDelete(item.id)}
-                                className="p-2"
-                            >
-                                <Trash2 size={24} color="#ef4444" />
-                            </TouchableOpacity>
-                        </View>
-                    ))}
+            {/* ↓ added loading + empty state, mirrors SourceManagement */}
+            {loading ? (
+                <View className="flex-1 items-center justify-center">
+                    <ActivityIndicator size="large" color="#7ac7ea" />
                 </View>
-            </ScrollView>
+            ) : nestItems.length === 0 ? (
+                <View className="flex-1 items-center justify-center px-8">
+                    <Text className="text-white text-xl font-oswald-semiBold text-center">
+                        No items in your Nest yet
+                    </Text>
+                    <Text className="text-gray-400 text-sm font-oswald-regular mt-2 text-center">
+                        Follow teams, leagues, or athletes to build your Nest.
+                    </Text>
+                </View>
+            ) : (
+                <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+                    <View className="flex-1">
+                        {nestItems.map((item) => (
+                            <View
+                                key={item.id}
+                                className="flex-row items-center bg-[#4a4a4a] rounded-xl p-4 mb-3"
+                            >
+                                <View className="w-12 h-12 rounded-full bg-white items-center justify-center overflow-hidden">
+                                    <Image
+                                        source={typeof item.image === 'string' ? { uri: item.image } : item.image}
+                                        className="w-full h-full"
+                                        resizeMode="cover"
+                                    />
+                                </View>
+
+                                <View className="flex-1 ml-4">
+                                    <Text className="text-white text-base font-oswald-semiBold">
+                                        {item.name}
+                                    </Text>
+                                    <Text className="text-gray-400 text-sm font-oswald-regular mt-0.5">
+                                        {item.type}
+                                    </Text>
+                                </View>
+
+                                <TouchableOpacity
+                                    onPress={() => handleDelete(item.id)}
+                                    className="p-2"
+                                >
+                                    <Trash2 size={24} color="#ef4444" />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+            )}
         </WrapperComponent>
     );
 };

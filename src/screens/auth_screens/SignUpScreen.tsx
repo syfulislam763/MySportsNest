@@ -132,7 +132,7 @@ const SignUpScreen = () => {
                                 className="absolute right-0 bottom-2"
                                 onPress={() => setShowPassword(!showPassword)}
                             >   
-                                {showPassword ? <EyeOff size={30} color="white" /> : <Eye size={30} color="white" />}
+                                {showPassword ?<Eye size={30} color="white" />  : <EyeOff size={30} color="white" /> }
                             </TouchableOpacity>
                         </View>
                     </View>

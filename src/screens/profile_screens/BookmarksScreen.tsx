@@ -70,8 +70,6 @@ const extractDateParts = (dateStr: string): string => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-
-
 const BookmarksScreen = ({ navigation }: { navigation: any }) => {
     const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([])
     const [loading, setLoading] = useState(true)
@@ -98,17 +96,13 @@ const BookmarksScreen = ({ navigation }: { navigation: any }) => {
     }, [fetchBookmarks])
 
     const handle_removeBookmark = async (feedItemId: number) => {
-        // Optimistic UI — remove immediately
         setRemovingIds(prev => new Set(prev).add(feedItemId))
         const previous = [...bookmarks]
-        setBookmarks(prev =>
-            prev.filter(b => b.feed_item.id !== feedItemId)
-        )
+        setBookmarks(prev => prev.filter(b => b.feed_item.id !== feedItemId))
         try {
-            const res = await api.post('/api/feed/bookmark/', { feed_item_id: feedItemId })
-            updateProfile({saved_posts_count: saved_posts_count?saved_posts_count-1:0})
+            await api.post('/api/feed/bookmark/', { feed_item_id: feedItemId })
+            updateProfile({ saved_posts_count: saved_posts_count ? saved_posts_count - 1 : 0 })
         } catch (err) {
-            // Revert on failure
             setBookmarks(previous)
             Alert.alert('Error', 'Could not remove bookmark. Please try again.')
         } finally {
@@ -124,30 +118,17 @@ const BookmarksScreen = ({ navigation }: { navigation: any }) => {
         setBookmarks(prev =>
             prev.map(b =>
                 b.feed_item.id === feedItemId
-                    ? {
-                          ...b,
-                          feed_item: {
-                              ...b.feed_item,
-                              is_liked: !b.feed_item.is_liked,
-                          },
-                      }
+                    ? { ...b, feed_item: { ...b.feed_item, is_liked: !b.feed_item.is_liked } }
                     : b
             )
         )
         try {
             await api.post('/api/feed/like/', { feed_item_id: feedItemId })
         } catch (err) {
-            // Revert
             setBookmarks(prev =>
                 prev.map(b =>
                     b.feed_item.id === feedItemId
-                        ? {
-                              ...b,
-                              feed_item: {
-                                  ...b.feed_item,
-                                  is_liked: !b.feed_item.is_liked,
-                              },
-                          }
+                        ? { ...b, feed_item: { ...b.feed_item, is_liked: !b.feed_item.is_liked } }
                         : b
                 )
             )
@@ -156,7 +137,6 @@ const BookmarksScreen = ({ navigation }: { navigation: any }) => {
 
     const renderPost = ({ item }: { item: BookmarkItem }) => {
         const post = item.feed_item
-
         return (
             <View className="py-4 mb-4 border-b border-b-white">
                 {/* Header row */}
@@ -188,9 +168,7 @@ const BookmarksScreen = ({ navigation }: { navigation: any }) => {
                                 <Text className="text-white/60 text-sm font-oswald-regular ml-2">
                                     @{post.source_name}
                                 </Text>
-                                <Text className="text-white/60 text-sm font-oswald-regular ml-1">
-                                    •
-                                </Text>
+                                <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
                                 <Text className="text-white/60 text-sm font-oswald-regular ml-1">
                                     {extractDateParts(post.published_at)}
                                 </Text>
@@ -241,6 +219,7 @@ const BookmarksScreen = ({ navigation }: { navigation: any }) => {
                             <TouchableOpacity
                                 onPress={() => handle_removeBookmark(post.id)}
                                 disabled={removingIds.has(post.id)}
+                                style={{ opacity: removingIds.has(post.id) ? 0.4 : 1 }} // ← added, mirrors SourceManagement
                             >
                                 <Bookmark
                                     size={22}
@@ -255,61 +234,51 @@ const BookmarksScreen = ({ navigation }: { navigation: any }) => {
         )
     }
 
-    // ── Loading state ────────────────────────────────────────────────────────
-    if (loading) {
-        return (
-            <View className="flex-1 bg-black items-center justify-center">
-                <ActivityIndicator size="large" color="#7ac7ea" />
-            </View>
-        )
-    }
-
-    // ── Empty state ──────────────────────────────────────────────────────────
-    if (!bookmarks.length) {
-        return (
-            <View className="flex-1 bg-black items-center justify-center px-8">
-                <Bookmark size={48} color="#7ac7ea" fill="transparent" />
-                <Text className="text-white text-xl font-oswald-medium mt-4 text-center">
-                    No saved posts yet
-                </Text>
-                <Text className="text-white/60 text-sm font-oswald-regular mt-2 text-center">
-                    Tap the bookmark icon on any post to save it here.
-                </Text>
-            </View>
-        )
-    }
-
-    // ── List ─────────────────────────────────────────────────────────────────
     return (
         <WrapperComponent
-            bg_color={"bg-[#5e5e5e]"}
-            container_bg={"bg-[#5e5e5e]"}
-            headerComponent = {() => {
-                return <View className="flex-row items-center mb-4 mx-5">
+            bg_color="bg-[#5e5e5e]"
+            container_bg="bg-[#5e5e5e]"
+            headerComponent={() => (
+                <View className="flex-row items-center mb-4 mx-5">
                     <BackButton />
                     <Text className="text-white text-xl font-oswald-semiBold ml-4">
                         Saved Posts
                     </Text>
                 </View>
-            }}
+            )}
         >
-       
-
-            <FlatList
-                data={bookmarks}
-                keyExtractor={item => item.id.toString()}
-                renderItem={renderPost}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={() => fetchBookmarks(true)}
-                        tintColor="#7ac7ea"
-                        colors={['#7ac7ea']}
-                    />
-                }
-            />
+            {/* ↓ loading + empty state now inside WrapperComponent so header always shows */}
+            {loading ? (
+                <View className="flex-1 items-center justify-center">
+                    <ActivityIndicator size="large" color="#7ac7ea" />
+                </View>
+            ) : bookmarks.length === 0 ? (
+                <View className="flex-1 items-center justify-center px-8">
+                    <Bookmark size={48} color="#7ac7ea" fill="transparent" />
+                    <Text className="text-white text-xl font-oswald-semiBold mt-4 text-center">
+                        No saved posts yet
+                    </Text>
+                    <Text className="text-gray-400 text-sm font-oswald-regular mt-2 text-center">
+                        Tap the bookmark icon on any post to save it here.
+                    </Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={bookmarks}
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={renderPost}
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={() => fetchBookmarks(true)}
+                            tintColor="#7ac7ea"
+                            colors={['#7ac7ea']}
+                        />
+                    }
+                />
+            )}
         </WrapperComponent>
     )
 }

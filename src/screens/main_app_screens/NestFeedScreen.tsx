@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useCallback} from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, FlatList, Image, Dimensions, Modal } from 'react-native';
 import { Search, ChevronDown, SlidersHorizontal, Heart, Bookmark, MoreVertical, Plus, X } from 'lucide-react-native';
 import WrapperComponent from '@/components/WrapperComponent';
@@ -7,14 +7,17 @@ import LiveBar from '@/components/LiveBar';
 import { Post } from '@/utils/main_app_types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MainStackParamList } from '@/navigations/types';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import WeeklyCalendar from './WeeklyCalendar';
 import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 import { feedback_post, get_home_feed, like_post } from './HomeFeedAPI';
 import { useAuthStore } from '@/context/useAuthStore';
 import { BASE_URL } from '@/constants/Path';
 import { Check} from 'lucide-react-native';
+import api from '@/constants/Axios';
 import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
+import { toast } from '@/context/useToastStore';
+
 
 type NavigationProps = StackNavigationProp<MainStackParamList>
 
@@ -65,6 +68,7 @@ const NestFeedScreen = () => {
     // tooltip: stores the post id whose tooltip is open, or null
     const [openTooltipId, setOpenTooltipId] = useState<number | null>(null);
     const profile = useAuthStore((s) => s.profile)
+    const setProfile = useAuthStore((s) => s.setProfile)
 
     const navigation = useNavigation<NavigationProps>()
 
@@ -138,18 +142,16 @@ const NestFeedScreen = () => {
             setLoadingFalse()
             if(res){
                 setPosts(res?.data?.results ??[])
-                //console.log("feed", JSON.stringify(res.data, null, 2))
+                console.log("feed", JSON.stringify(res.data, null, 2))
             }
         })
     }
 
+    
 
-    const handle_search = (value: string) => {
-        setSearchQuery(value);
-        if (!value) {
-            setSearchResults([]);///iijdfjdfdjfdjfjdsjfdsjfjdsf
-            return;
-        }
+    const handle_search = (value:string) => {
+        // setSearchQuery(value);
+       
         OnboardingAPI.get_trending_data(value).then((res) => {
             const all: SearchEntity[] = [
                 ...(res?.data?.teams ?? []),
@@ -161,6 +163,14 @@ const NestFeedScreen = () => {
             setSelectedItems((prev) => Array.from(new Set([...prev, ...nestIds])));
         }).catch(() => {});
     };
+
+    useEffect(()=> {
+        if (!searchQuery.trim()) return;
+        const delayDebounceFn = setTimeout(() => {
+            handle_search(searchQuery);
+        }, 500); 
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery])
 
     const handleSort = (sortString:string) => {
         setLoadingTrue();
@@ -180,7 +190,23 @@ const NestFeedScreen = () => {
 
     useEffect(() => {
         handle_get_feed_posts(null);
-    }, [])
+    }, [profile?.nest_count])
+
+    useFocusEffect(
+        useCallback(() => {
+            Promise.all([
+            api.get('/api/auth/profile-info/'),
+            api.get('/api/auth/profile/')
+        ]).then(([profileInfoRes, profileDataRes]) => {
+            setProfile({
+                ...profileInfoRes.data,
+                ...profileDataRes.data.data,
+            });
+        }).catch(() => {
+            toast.error("Failed to load profile");
+        });
+        }, [])
+    )
 
     const toggleFilter = (filter: string) => {
         if (selectedFilters.includes(filter)) {
@@ -202,7 +228,7 @@ const NestFeedScreen = () => {
                             <Text className="text-white text-lg font-oswald-medium">{item.source_name}</Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-2">{"@name"}</Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
-                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>jjjdjj
+                            <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>
                         </View>
                         <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
                     </View>
@@ -273,6 +299,9 @@ const NestFeedScreen = () => {
 
     return (
         <View className='flex-1'>
+
+
+
             <WrapperComponent
                 title={""}
                 bg_color={"bg-[#5e5e5e]"}
@@ -287,7 +316,7 @@ const NestFeedScreen = () => {
                                     placeholder="Search teams, athletes, leagues..."
                                     placeholderTextColor="#a0a0a0"
                                     value={searchQuery}
-                                    onChangeText={handle_search}
+                                    onChangeText={(e) => setSearchQuery(e)}
                                 />
                                 <View className="absolute right-4 top-3">
                                     <Search size={22} color="#5e5e5e" />
@@ -296,7 +325,7 @@ const NestFeedScreen = () => {
                         </View>
 
                         <TouchableOpacity onPress={() => navigation.navigate("ProfileSettingsScreen")}>
-                            <Image source={ {uri: BASE_URL+profile?.profile_picture || ""} } className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
+                            <Image source={profile?.profile_picture? {uri: BASE_URL+profile?.profile_picture}: require("../../../assets/temp/test_p1.jpg") } className="w-12 h-12 rounded-full" style={{resizeMode: 'cover'}} />
                         </TouchableOpacity>
                 </View>}
             >
@@ -312,7 +341,22 @@ const NestFeedScreen = () => {
                         {activeTab == "calendar" && <View className="h-1 w-32 bg-[#7ac7ea] rounded-full mt-1" />}
                     </TouchableOpacity>    
                 </View>
-
+                
+                {(sortOpen || filterOpen || menuOpen) && (
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={() => {
+                            setMenuOpen(false);
+                            setSortOpen(false);
+                            setFilterOpen(false);
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            zIndex: 10,
+                        }}
+                    />
+                )}
 
                 {activeTab == "calendar"? <WeeklyCalendar/> :
                 

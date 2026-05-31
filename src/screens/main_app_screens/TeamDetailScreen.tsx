@@ -91,7 +91,6 @@ const TeamDetailScreen = () => {
     }, [viewEntity])
 
     const handle_search = (value: string) => {
-        setSearchQuery(value);
         if (!value) {
             setSearchResults([]);
             return;
@@ -183,7 +182,6 @@ const TeamDetailScreen = () => {
 
     // --- Source search handlers ---
     const handle_source_search = (value: string) => {
-        setSourceSearchQuery(value);
         if (!value.trim()) {
             setSourceResults([]);
             return;
@@ -209,6 +207,23 @@ const TeamDetailScreen = () => {
             }
         }, 400);
     };
+
+    useEffect(()=> {
+        if (!sourceSearchQuery.trim()) return;
+        const delayDebounceFn = setTimeout(() => {
+            handle_source_search(sourceSearchQuery);
+        }, 500); 
+        return () => clearTimeout(delayDebounceFn);
+    }, [sourceSearchQuery])
+
+
+    useEffect(()=> {
+        if (!searchQuery.trim()) return;
+        const delayDebounceFn = setTimeout(() => {
+            handle_search(searchQuery);
+        }, 500); 
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery])
 
     const handle_add_source = async (item: SourceResult) => {
         setItemLoading((prev) => ({ ...prev, [item.domain]: true }));
@@ -328,7 +343,7 @@ const TeamDetailScreen = () => {
                                 placeholder="Search to add a source for this team/league/athlete"
                                 placeholderTextColor="#a0a0a0"
                                 value={sourceSearchQuery}
-                                onChangeText={handle_source_search}
+                                onChangeText={(e) => setSourceSearchQuery(e)}
                             />
                             {/* Right icon: spinner while fetching, X to clear, or magnifier */}
                             <View className="absolute right-4 top-3">

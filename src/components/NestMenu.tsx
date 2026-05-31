@@ -10,6 +10,7 @@ import { MainStackParamList } from '@/navigations/types';
 import { useNavigation } from '@react-navigation/native';
 import AddToNestModal from './AddToNestModal';
 import { OnboardingAPI } from '@/screens/onboarding_screens/onboardingApi';
+import { useAuthStore } from '@/context/useAuthStore';
 
 type NavigationPropsType = NativeStackNavigationProp<MainStackParamList>
 
@@ -82,6 +83,8 @@ const NestMenu: React.FC<NestMenuProps> = ({
         Array(MAX_VISIBLE).fill(EMPTY_ITEM)
     )
 
+    const profile = useAuthStore(s => s.profile);
+
     const introAnim  = useRef(new Animated.Value(0)).current
     const navigation = useNavigation<NavigationPropsType>()
 
@@ -126,7 +129,7 @@ const NestMenu: React.FC<NestMenuProps> = ({
             } catch (_) {}
         }
         fetchData()
-    }, [openAddtoNestModal])
+    }, [openAddtoNestModal, profile?.nest_count])
 
     useEffect(() => {
         if (circularItems.length > 0) seedSlots(circularItems)
@@ -196,7 +199,7 @@ const NestMenu: React.FC<NestMenuProps> = ({
         })
 
         return () => offsetRef.removeListener(id)
-    }, [circularItems])
+    }, [circularItems, profile?.nest_count])
 
     useEffect(() => {
         const visible = Math.min(circularItems.length, MAX_VISIBLE)
@@ -263,7 +266,8 @@ const NestMenu: React.FC<NestMenuProps> = ({
             onRequestClose={() => setMenuOpen(false)}
         >
             {Platform.OS === 'ios' ? (
-                <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                //<BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.75)' }]} />
             ) : (
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.75)' }]} />
             )}

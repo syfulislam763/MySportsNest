@@ -70,8 +70,6 @@ const WelcomeMyNestScreen = () => {
     };
 
     const handle_search = (value:any) => {
-        console.log(value)
-        setSearchQuery(value);
         // setLoadingTrue();
         get_trending_data(value, res => {
             //setLoadingFalse();
@@ -80,6 +78,14 @@ const WelcomeMyNestScreen = () => {
             }
         })
     }
+
+    useEffect(()=> {
+        if (!searchQuery.trim()) return;
+        const delayDebounceFn = setTimeout(() => {
+            handle_search(searchQuery);
+        }, 500); 
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery])
 
 
 
@@ -128,7 +134,7 @@ const WelcomeMyNestScreen = () => {
                         placeholder="Search teams, athletes, leagues..."
                         placeholderTextColor="#a0a0a0"
                         value={searchQuery}
-                        onChangeText={handle_search}
+                        onChangeText={(e) => setSearchQuery(e)}
                     />
                     <View className="absolute right-4 top-4">
                         <Search size={24} color="#5e5e5e" />

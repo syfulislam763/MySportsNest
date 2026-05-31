@@ -1,5 +1,5 @@
 import api from "@/constants/Axios";
-import { CHANGE_PASS, DELETE_ACCOUNT, LOGIN, LOGOUT, REFRESH_TOKEN, REGISTER, RESEND_OTP, RESET_PASS_CONFIRM, RESET_PASS_REQ, RESET_PASS_VERIFY, VERIFY_EMAIL } from "@/constants/Path";
+import { CHANGE_PASS, DELETE_ACCOUNT, LOGIN, LOGOUT, REFRESH_TOKEN, REGISTER, RESEND_OTP, RESET_PASS_CONFIRM, RESET_PASS_REQ, RESET_PASS_VERIFY, VERIFY_EMAIL, BASE_URL } from "@/constants/Path";
 import { toast } from "@/context/useToastStore";
 import axios from "axios";
 
@@ -30,18 +30,18 @@ type ChangePass = {
 }
 export const register_user = async (payload:Register, cb:(item:any)=>void) => {
     try {
-        const res = await api.post(REGISTER, payload)
+        const res = await axios.post(BASE_URL+REGISTER, payload)
         cb(res.data)
 
     }catch(e:any){
-        console.log(JSON.stringify(e?.response, null,  2), "register error")
+        console.log(JSON.stringify(e, null,  2), "register error")
         toast.error("Enter valid data and in password use mix of characters, numbers , and special symbol")
         cb(null);
     }
 }
 export const verify_email = async (payload:VerifyEmail, cb:(item:any)=>void) => {
     try {
-        const res = await api.post(VERIFY_EMAIL, payload)
+        const res = await axios.post(BASE_URL+VERIFY_EMAIL, payload)
         cb(res.data)
     }catch(e:any){
         console.log(JSON.stringify(e?.response, null,  2), "verify email error")
@@ -51,11 +51,11 @@ export const verify_email = async (payload:VerifyEmail, cb:(item:any)=>void) => 
 
 export const login_user = async (payload:Login, cb:(item:any)=>void) => {
  
-    delete api.defaults.headers.common['Authorization'];
-    delete api.defaults.headers['Authorization'];
+    // delete api.defaults.headers.common['Authorization'];
+    // delete api.defaults.headers['Authorization'];
   
     try {
-        const res = await api.post(LOGIN, payload)
+        const res = await axios.post(BASE_URL+LOGIN, payload)
         cb(res.data)
     }catch(e:any){
         console.log(JSON.stringify(e, null,  2), "login user error")
@@ -64,7 +64,7 @@ export const login_user = async (payload:Login, cb:(item:any)=>void) => {
 }
 export const resend_otp = async (payload:{email: string, purpose:string}, cb:(item:any)=>void) => {
     try {
-        const res = await api.post(RESEND_OTP, payload)
+        const res = await axios.post(BASE_URL+RESEND_OTP, payload)
         cb(res.data)
     }catch(e:any){
         console.log(JSON.stringify(e?.response, null,  2), "resend otp error")
@@ -84,7 +84,7 @@ export const refresh_token = async (payload:{refresh: string}, cb:(item:any)=>vo
 
 export const reset_pass_request = async (payload:{email:string}, cb:(item:any)=>void) => {
     try {
-        const res = await api.post(RESET_PASS_REQ, payload)
+        const res = await axios.post(BASE_URL+RESET_PASS_REQ, payload)
         cb(res.data)
     }catch(e:any){
         console.log(JSON.stringify(e?.response, null,  2), "reset pass request error")
@@ -94,7 +94,7 @@ export const reset_pass_request = async (payload:{email:string}, cb:(item:any)=>
 
 export const verify_reset_pass = async (payload:VerifyEmail, cb:(item:any)=>void) => {
     try {
-        const res = await api.post(RESET_PASS_VERIFY, payload)
+        const res = await axios.post(BASE_URL+RESET_PASS_VERIFY, payload)
         cb(res.data)
     }catch(e:any){
         console.log(JSON.stringify(e?.response, null,  2), "reset pass verify otp error")
@@ -104,7 +104,7 @@ export const verify_reset_pass = async (payload:VerifyEmail, cb:(item:any)=>void
 
 export const confirm_reset_pass = async (payload:ResetConfirmPass, cb:(item:any)=>void) => {
     try {
-        const res = await api.post(RESET_PASS_CONFIRM, payload)
+        const res = await axios.post(BASE_URL+RESET_PASS_CONFIRM, payload)
         cb(res.data)
     }catch(e:any){
         console.log(JSON.stringify(e?.response, null,  2), "reset pass confirm error")
