@@ -29,11 +29,13 @@ interface AuthStore {
     refresh: string;
     access: string;
     isAuthenticated: boolean;
+    onboardingCompleted: boolean;
     preference: Preference,
     profile: Profile | null,
 
     setPreference: (val:Preference) => void,
     setIsAuthenticated: (val:boolean) => void;
+    setOnboardingCompleted: (val:boolean) => void;
     setUser: (user:any) => void;
     setAccessToken: (token:string) => void;
     setRefreshToken: (token:string) => void;
@@ -58,7 +60,9 @@ export const useAuthStore = create<AuthStore>()(persist(
         },
         setPreference: (val: Preference) => set({preference: val}),
         isAuthenticated: false,
+        onboardingCompleted: false,
         setIsAuthenticated: (isAuthenticated:boolean) => set({isAuthenticated}),
+        setOnboardingCompleted: (onboardingCompleted:boolean) => set({onboardingCompleted}),
         setUser: (user:any) => set({user}),
         setAccessToken: (access:string) => set(state => {
             setHeaderToken(access);

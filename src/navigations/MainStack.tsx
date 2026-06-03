@@ -15,16 +15,24 @@ import EventDetailsScreen from '@/screens/main_app_screens/EventDetailsScreen';
 import BookmarksScreen from '@/screens/profile_screens/BookmarksScreen';
 import SourceManagement from '@/screens/profile_screens/SourceManagement';
 import LiveScoreDetail from '@/screens/main_app_screens/LiveScoreDetail';
+import { useAuthStore } from '@/context/useAuthStore';
 //fdfdffdf f d fds fsf dsf dsf dsfds,  hello d
 const Stack = createNativeStackNavigator();
 
 const MainStack = () => {
+    const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted)
+
+
     return (
         <Stack.Navigator
             screenOptions={{headerShown:false}}
         >
-            <Stack.Screen name="WelcomeMyNestScreen" component={WelcomeMyNestScreen}/>
-            <Stack.Screen name='ScoreVisibilityScreen' component={ScoreVisibilityScreen} />
+            {!onboardingCompleted?
+                <>
+                    <Stack.Screen name="WelcomeMyNestScreen" component={WelcomeMyNestScreen}/>
+                    <Stack.Screen name='ScoreVisibilityScreen' component={ScoreVisibilityScreen} />
+                </>: null
+            }
 
             <Stack.Screen name='NestFeedScreen' component={NestFeedScreen} />
             

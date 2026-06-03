@@ -25,6 +25,7 @@ const ScoreVisibilityScreen = () => {
     const navigation = useNavigation<NavigationProps>();
     const logout = useAuthStore((s) => s.logout);
     const setPreference = useAuthStore((s) => s.setPreference);
+    const setOnboardingCompleted = useAuthStore((s) => s.setOnboardingCompleted)
     const setProfile = useAuthStore((s) => s.setProfile)
 
     const [openModal, setOpenModal] = useState(false);
@@ -55,6 +56,7 @@ const ScoreVisibilityScreen = () => {
             setOpenModal(false);
             if(res){
                 setPreference(res);
+                setOnboardingCompleted(true)
                 navigation.navigate("NestFeedScreen")
             }
         })
