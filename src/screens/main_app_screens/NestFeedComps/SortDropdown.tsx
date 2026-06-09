@@ -1,22 +1,24 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ChevronDown, X } from 'lucide-react-native';
 import { useNestFeed } from '@/hooks/useNestFeed';
 
 const SORT_OPTIONS = ['Latest', 'Oldest', 'Most Liked', 'Least Liked'];
 
-const SortDropdown = memo(() => {
-    const { sortOpen, selectedSort, toggleSort, handleSort, clearSort, filterOpen, toggleFilterPanel } = useNestFeed();
+const SortDropdown = memo(({scrollSignal, sortHide,setFilterHide}: {scrollSignal:number, sortHide?: boolean, setFilterHide: (val: boolean)=> boolean} | any) => {
+    const { sortOpen, selectedSort, toggleSort, handleSort, clearSort, resetFilterSort } = useNestFeed();
+
+    useEffect(() => {
+        resetFilterSort();
+    }, [scrollSignal, sortHide])
 
     return (
         <View>
             <TouchableOpacity
                 className="flex-row items-center mr-3 border border-white/30 rounded-full px-3 py-1"
                 onPress={() => {
-                    if(filterOpen){
-                        toggleFilterPanel()
-                    }
                     toggleSort()
+                    setFilterHide((p:boolean) => !p)
                 }}
             >
                 <Text className="text-white text-sm font-oswald-regular mr-1">Sort</Text>

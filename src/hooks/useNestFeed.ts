@@ -47,8 +47,12 @@ export const useNestFeed = () => {
     const [selectedSort, setSelectedSort] = useState('');
     const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
     const [posts, setPosts] = useState<Post[]>([]);
-    const [openTooltipId, setOpenTooltipId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>('feed');
+
+    // Incrementing counter: PostCard listens to this to close its own tooltip on scroll.
+    // No need to track which card is open — each card manages that itself.
+    const [scrollSignal, setScrollSignal] = useState(0);
+    const onScrollBeginDrag = useCallback(() => setScrollSignal((n) => n + 1), []);
 
     const profile = useAuthStore((s) => s.profile);
     const setProfile = useAuthStore((s) => s.setProfile);
@@ -67,12 +71,21 @@ export const useNestFeed = () => {
     }, []);
 
     const handle_Like = useCallback((id: number) => {
+        setPosts((prev) =>
+            prev.map((p) =>
+                p.id === id
+                    ? { ...p, is_liked: !p.is_liked, views: p.views + (!p.is_liked ? 1 : -1) }
+                    : p
+            )
+        );
         like_post(id, (res) => {
             if (res) {
+                
+            }else{
                 setPosts((prev) =>
                     prev.map((p) =>
                         p.id === id
-                            ? { ...p, is_liked: res?.data?.liked, views: p.views + (res?.data?.liked ? 1 : -1) }
+                            ? { ...p, is_liked: !p.is_liked, views: p.views + (!p.is_liked ? 1 : -1) }
                             : p
                     )
                 );
@@ -81,8 +94,15 @@ export const useNestFeed = () => {
     }, []);
 
     const handle_feedback = useCallback((id: number) => {
+        setPosts((prev) =>
+            prev.map((p) =>
+                p.id === id ? { ...p, is_bookmarked: !p.is_bookmarked } : p
+            )
+        );
         feedback_post(id, (res) => {
             if (res) {
+                
+            }else{
                 setPosts((prev) =>
                     prev.map((p) =>
                         p.id === id ? { ...p, is_bookmarked: !p.is_bookmarked } : p
@@ -94,14 +114,12 @@ export const useNestFeed = () => {
 
     const handleHidePost = useCallback((id: number) => {
         setPosts((prev) => prev.filter((p) => p.id !== id));
-        setOpenTooltipId(null);
     }, []);
-
 
     const handleSort = useCallback((sortString: string) => {
         setSelectedSort(sortString);
         setSortOpen(false);
-        setFilterOpen(false)
+        setFilterOpen(false);
         setSelectedFilters((prevFilters) => {
             const q = buildQuery(prevFilters, sortString);
             handle_get_feed_posts(q);
@@ -128,7 +146,6 @@ export const useNestFeed = () => {
     }, []);
 
     const clearSort = useCallback(() => {
-        
         setSelectedSort('');
         setSelectedFilters((prevFilters) => {
             const q = buildQuery(prevFilters, '');
@@ -145,7 +162,6 @@ export const useNestFeed = () => {
             return prevSort;
         });
     }, [handle_get_feed_posts]);
-
 
     const handle_search = useCallback((value: string) => {
         OnboardingAPI.get_trending_data(value)
@@ -185,12 +201,14 @@ export const useNestFeed = () => {
 
     const toggleSort = useCallback(() => {
         setSortOpen((prev) => !prev);
-        // setFilterOpen(false);
     }, []);
+    const resetFilterSort = useCallback(() => {
+        setSortOpen(false);
+        setFilterOpen(false);
+    }, [])
 
     const toggleFilterPanel = useCallback(() => {
         setFilterOpen((prev) => !prev);
-        // setSortOpen(false);
     }, []);
 
     const closeAllDropdowns = useCallback(() => {
@@ -228,7 +246,6 @@ export const useNestFeed = () => {
     );
 
     return {
-
         searchQuery, setSearchQuery,
         searchResults,
         selectedItems,
@@ -237,11 +254,12 @@ export const useNestFeed = () => {
         selectedSort,
         selectedFilters,
         posts,
-        openTooltipId, setOpenTooltipId,
+        scrollSignal,
+        onScrollBeginDrag,
         activeTab, setActiveTab,
         profile,
         navigation,
-  
+
         handle_Like,
         handle_feedback,
         handleHidePost,
@@ -255,5 +273,7 @@ export const useNestFeed = () => {
         toggleSort,
         toggleFilterPanel,
         closeAllDropdowns,
+
+        resetFilterSort,
     };
 };

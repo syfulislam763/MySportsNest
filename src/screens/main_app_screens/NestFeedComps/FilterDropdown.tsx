@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { SlidersHorizontal, X } from 'lucide-react-native';
 import { useNestFeed } from '@/hooks/useNestFeed';
@@ -15,13 +15,20 @@ type Props = {
     onClose: () => void;
 };
 
-const FilterDropdown = memo(() => {
-    const {filterOpen, selectedFilters, toggleFilterPanel, toggleFilter, handleApplyFilter, clearFilter} = useNestFeed()
+const FilterDropdown = memo(({scrollSignal, filterHide, setSortHide}: {scrollSignal:number, filterHide?: boolean, setSortHide: (val: boolean)=> boolean} | any) => {
+    const {filterOpen, selectedFilters, toggleFilterPanel, toggleFilter, handleApplyFilter, clearFilter, resetFilterSort} = useNestFeed()
+
+    useEffect(() => {
+        resetFilterSort();
+    }, [scrollSignal, filterHide])
     return (
     <View>
         <TouchableOpacity
             className="flex-row items-center border border-white/30 rounded-full px-3 py-1"
-            onPress={toggleFilterPanel}
+            onPress={() => {
+                toggleFilterPanel();
+                setSortHide((p:boolean) => !p)
+            }}
         >
             <SlidersHorizontal size={18} color="white" />
             <Text className="text-white text-sm font-oswald-regular ml-1">Filter</Text>

@@ -2,23 +2,37 @@ import React, { memo } from 'react';
 import { View, Text, Image, TextInput, TouchableOpacity } from 'react-native';
 import { Search } from 'lucide-react-native';
 import { BASE_URL } from '@/constants/Path';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainStackParamList } from '@/navigations/types';
+import { CircleUserRound } from 'lucide-react-native';
+type NavigationProps = StackNavigationProp<MainStackParamList>;
 
 type Props = {
     searchQuery: string;
     onSearchChange: (value: string) => void;
     profilePicture?: string | null;
     onProfilePress: () => void;
+    setActiveTab: (val:string) => void;
 };
 
 const appIcon = require('../../../../assets/img/appIcon.png');
 
-const NestFeedHeader = memo(({ searchQuery, onSearchChange, profilePicture, onProfilePress }: Props) => (
+const NestFeedHeader = memo(({ searchQuery, onSearchChange, profilePicture, onProfilePress, setActiveTab }: Props) => {
+    const navigation = useNavigation<NavigationProps>()
+    return (
     <View className="flex-row items-center justify-between mb-4 mx-3">
-        <Image
-            source={appIcon}
-            className="w-14 h-14"
-            style={{ resizeMode: 'contain' }}
-        />
+        
+        <TouchableOpacity onPress={() => {
+            // navigation.navigate("NestFeedScreen")
+            setActiveTab('feed')
+        }}>
+            <Image
+                source={appIcon}
+                className="w-14 h-14"
+                style={{ resizeMode: 'contain' }}
+            />
+        </TouchableOpacity>
 
         <View className="flex-1 mx-2">
             <TextInput
@@ -34,7 +48,8 @@ const NestFeedHeader = memo(({ searchQuery, onSearchChange, profilePicture, onPr
         </View>
 
         <TouchableOpacity onPress={onProfilePress}>
-            <Image
+            {profilePicture ? 
+                <Image
                 source={
                     profilePicture
                         ? { uri: BASE_URL + profilePicture }
@@ -42,10 +57,15 @@ const NestFeedHeader = memo(({ searchQuery, onSearchChange, profilePicture, onPr
                 }
                 className="w-12 h-12 rounded-full"
                 style={{ resizeMode: 'cover' }}
-            />
+            />:
+
+             <CircleUserRound color={"white"} size={35}/>
+        
+            }
         </TouchableOpacity>
     </View>
-));
+)
+});
 
 NestFeedHeader.displayName = 'NestFeedHeader';
 export default NestFeedHeader;

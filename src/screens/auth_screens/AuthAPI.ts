@@ -35,7 +35,7 @@ export const register_user = async (payload:Register, cb:(item:any)=>void) => {
 
     }catch(e:any){
         console.log(JSON.stringify(e, null,  2), "register error")
-        toast.error("Enter valid data and in password use mix of characters, numbers , and special symbol")
+        toast.error("Password not strong enough")
         cb(null);
     }
 }

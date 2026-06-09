@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Heart, Bookmark, MoreVertical } from 'lucide-react-native';
 import { Post } from '@/utils/main_app_types';
@@ -18,8 +18,7 @@ const extractDateParts = (dateInput: string) => {
 
 type Props = {
     item: Post;
-    openTooltipId: number | null;
-    onToggleTooltip: (id: number) => void;
+    scrollSignal: number;
     onHide: (id: number) => void;
     onLike: (id: number) => void;
     onBookmark: (id: number) => void;
@@ -27,13 +26,17 @@ type Props = {
 
 const PostCard = memo(({
     item,
-    openTooltipId,
-    onToggleTooltip,
+    scrollSignal,
     onHide,
     onLike,
     onBookmark,
 }: Props) => {
-    const isTooltipOpen = openTooltipId === item.id;
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+
+    // Close tooltip whenever the parent signals a scroll event
+    useEffect(() => {
+        if (scrollSignal > 0) setTooltipOpen(false);
+    }, [scrollSignal]);
 
     return (
         <View className="py-4 mb-4 border-b border-b-white">
@@ -70,15 +73,18 @@ const PostCard = memo(({
                     </View>
                 </View>
 
-                {/* Three-dot tooltip */}
+                {/* Three-dot tooltip — fully self-contained */}
                 <View style={{ position: 'relative' }}>
-                    <TouchableOpacity onPress={() => onToggleTooltip(item.id)}>
+                    <TouchableOpacity onPress={() => setTooltipOpen((prev) => !prev)}>
                         <MoreVertical size={24} color="white" />
                     </TouchableOpacity>
 
-                    {isTooltipOpen && (
+                    {tooltipOpen && (
                         <TouchableOpacity
-                            onPress={() => onHide(item.id)}
+                            onPress={() => {
+                                setTooltipOpen(false);
+                                onHide(item.id);
+                            }}
                             style={{
                                 position: 'absolute',
                                 top: 28,
@@ -94,11 +100,14 @@ const PostCard = memo(({
                                 shadowOffset: { width: 0, height: 3 },
                                 shadowOpacity: 0.2,
                                 shadowRadius: 6,
-                                minWidth: 80,
+                                width: 200,
                             }}
                         >
                             <Text style={{ color: '#e53935', fontSize: 13, fontFamily: 'Oswald-Medium' }}>
-                                Hide post
+                                Hide Source
+                            </Text>
+                            <Text style={{  fontSize: 10, fontFamily: 'Oswald-Medium' }}>
+                                By hiding this source, you will no longer receive Nest Feed posts from this source.
                             </Text>
                         </TouchableOpacity>
                     )}

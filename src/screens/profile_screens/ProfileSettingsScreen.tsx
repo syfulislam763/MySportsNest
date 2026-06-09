@@ -13,6 +13,7 @@ import { setLoadingFalse, setLoadingTrue } from '@/context/useLoadingStore';
 import { set_preference } from '../onboarding_screens/onboardingApi';
 import { BASE_URL } from '@/constants/Path';
 import api from '@/constants/Axios';
+import { CircleUserRound } from 'lucide-react-native';
 
 type PREFERENCE_TYPE = {
     show_live_scores: boolean,
@@ -144,11 +145,20 @@ const ProfileSettingsScreen = () => {
             <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
                 <View className="pb-6">
                     <View className="flex-row items-center mb-6">
-                        <Image 
+                        {
+                            profile?.profile_picture?
+                            <Image 
                             source={profile?.profile_picture ? { uri: BASE_URL+profile?.profile_picture} : profilePic}
                             className="w-20 h-20 rounded-full mr-4"
                             style={{ resizeMode: 'cover' }}
-                        />
+                        />:
+
+                            <View className='mr-2'> 
+
+                                <CircleUserRound color={"white"} size={40}/>
+                            </View>
+                        }
+                        
                         <View className="flex-1">
                             <Text className="text-white text-2xl font-oswald-semiBold">
                                 {profile?.full_name || profile?.full_name || 'John Doe'}

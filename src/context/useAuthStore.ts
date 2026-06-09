@@ -81,6 +81,7 @@ export const useAuthStore = create<AuthStore>()(persist(
                 access: '',
                 isAuthenticated: false,
                 profile: null,
+                onboardingCompleted: false,
             }
         })
     }),

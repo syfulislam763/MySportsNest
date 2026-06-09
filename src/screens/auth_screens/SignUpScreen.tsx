@@ -92,7 +92,7 @@ const SignUpScreen = () => {
                     </View> */}
 
                     <View className="mb-6">
-                        <Text className="text-white text-base font-oswald-medium mb-4">Name</Text>
+                        <Text className="text-white text-base font-oswald-medium mb-4">Name<Text className='text-red-500'>*</Text></Text>
                         <TextInput
                             className="text-white text-base pb-3 font-oswald-medium border-b border-white"
                             placeholder="Enter your name"
@@ -104,7 +104,7 @@ const SignUpScreen = () => {
                     </View>
 
                     <View className="mb-6">
-                        <Text className="text-white text-base font-oswald-medium mb-4">Email</Text>
+                        <Text className="text-white text-base font-oswald-medium mb-4">Email<Text className='text-red-500'>*</Text></Text>
                         <TextInput
                             className="text-white text-base pb-3 font-oswald-medium border-b border-white"
                             placeholder="Enter your email"
@@ -117,7 +117,7 @@ const SignUpScreen = () => {
                     </View>
 
                     <View className="mb-6">
-                        <Text className="text-white text-base font-oswald-medium mb-4">Password</Text>
+                        <Text className="text-white text-base font-oswald-medium mb-4">Password<Text className='text-red-500'>*</Text></Text>
                         <View className="relative">
                             <TextInput
                                 className="text-white text-base font-oswald-medium pb-3 border-b border-white pr-10"

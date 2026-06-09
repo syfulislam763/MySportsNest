@@ -163,7 +163,7 @@ const WelcomeMyNestScreen = () => {
                             setFilterItem('athletes')
                         }}
                     >
-                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Popular' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Popular Athletes</Text>
+                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Popular' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Trending Athletes</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                         className={`px-4 py-2 bg-[#4c4c4c] rounded-[7px] ${selectedTab === 'Leagues' ? 'bg-[#64737a] border border-[#7ac7ea]' : 'bg-transparent'}`}
@@ -172,7 +172,7 @@ const WelcomeMyNestScreen = () => {
                             setFilterItem('leagues')
                         }}
                     >
-                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Leagues' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Leagues by Region</Text>
+                        <Text className={`font-oswald-regular text-sm ${selectedTab === 'Leagues' ? 'text-[#7ac7ea]' : 'text-white/60'}`}>Trending Leagues</Text>
                     </TouchableOpacity>
                 </View>
 
