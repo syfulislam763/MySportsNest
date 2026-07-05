@@ -30,4 +30,6 @@ export type Post = {
     views: number
     is_bookmarked: boolean
     is_liked: boolean
+    publisher_name: string
+    publisher_logo: string
 }

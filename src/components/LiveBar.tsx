@@ -36,7 +36,7 @@ const LiveBar = () => {
     };
 
     const getScoreLabel = (game: (typeof liveScores)[0]): string => {
-        if (game.status_detail) return game.status_detail;
+        //if (game.status_detail) return game.status_detail;
         if (game.home_score !== null && game.away_score !== null) {
             return `${game.home_score} - ${game.away_score}`;
         }
@@ -76,7 +76,7 @@ const LiveBar = () => {
                         >
                             {renderLogo(game.home_logo, 'left')}
                             <Text className="text-white text-sm font-oswald-bold flex-1" numberOfLines={1}>
-                                {abbr(game.home_team)} {getScoreLabel(game)} {abbr(game.away_team)}
+                                {game.home_team} {getScoreLabel(game)} {game.away_team}
                             </Text>
                             {renderLogo(game.away_logo, 'right')}
                             <View className="h-6 w-[1px] bg-white ml-4" />

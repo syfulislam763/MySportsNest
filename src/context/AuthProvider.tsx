@@ -50,9 +50,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const ws = new WebSocket(`${SOCKET_BASE_URL}/ws/scores/live/?token=${token}`);
         socketRef.current = ws;
 
+        ws.onopen = () => {
+            console.log("WebSocket connected");
+        }
+
         ws.onmessage = (e) => {
             try {
                 const data = JSON.parse(e.data);
+
+                //console.log("WebSocket message received:", JSON.stringify(data, null, 2));
                 if (data.type === 'snapshot') {
                     setLiveScores(data.games ?? []);
                 } else if (data.type === 'update' && data.game) {
@@ -68,10 +74,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         };
 
         ws.onclose = () => {
+            console.log("WebSocket closed");
             socketRef.current = null;
         };
 
-        ws.onerror = () => {};
+        ws.onerror = () => {
+            console.error("WebSocket error occurred");
+            socketRef.current?.close();
+            socketRef.current = null;
+        };
     }, [token]);
 
     useEffect(() => {
@@ -87,6 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             socketRef.current?.close();
             socketRef.current = null;
         };
+
     }, [token, connectSocket]);
 
     return (

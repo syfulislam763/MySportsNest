@@ -48,6 +48,8 @@ const NestFeedScreen = () => {
         closeAllDropdowns,
     } = useNestFeed();
 
+    //console.log('NestFeedScreen render', JSON.stringify(posts, null, 2));
+
     const renderPost = useCallback(
         ({ item }: { item: Post }) => (
             <PostCard

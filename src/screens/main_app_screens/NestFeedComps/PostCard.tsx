@@ -44,9 +44,9 @@ const PostCard = memo(({
             <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-row items-start flex-1">
                     <TouchableOpacity>
-                        {item.source_logo ? (
+                        {item.publisher_logo ? (
                             <Image
-                                source={{ uri: item.source_logo }}
+                                source={{ uri: item.publisher_logo }}
                                 className="w-12 h-12 rounded-full"
                                 style={{ resizeMode: 'cover' }}
                             />
@@ -57,10 +57,10 @@ const PostCard = memo(({
                     <View className="ml-3 flex-1">
                         <View className="flex-row items-center flex-wrap">
                             <Text className="text-white text-lg font-oswald-medium">
-                                {item.source_name}
+                                {item.publisher_name}
                             </Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-2">
-                                {'@name'}
+                                {/* {'@name'} */}
                             </Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">

@@ -1,7 +1,9 @@
 
 export const BASE_URL = 'https://api.mysportsnest.com';
+//export const BASE_URL = 'http://10.10.28.13:8005'
 
 export const SOCKET_BASE_URL = 'wss://api.mysportsnest.com/'
+//export const SOCKET_BASE_URL = 'ws://10.10.28.13:8005'
 
 export const REGISTER = '/api/auth/register/'
 export const VERIFY_EMAIL = '/api/auth/verify-email/'
