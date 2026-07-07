@@ -9,6 +9,7 @@ import { useAuthStore } from '@/context/useAuthStore';
 import { OnboardingAPI, add_nest_entity, remove_nest_entity } from '@/screens/onboarding_screens/onboardingApi';
 import { toast } from '@/context/useToastStore';
 import api from '@/constants/Axios';
+import { hide_source } from '@/screens/main_app_screens/HomeFeedAPI';
 
 type NavigationProps = StackNavigationProp<MainStackParamList>;
 
@@ -49,16 +50,12 @@ export const useNestFeed = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [activeTab, setActiveTab] = useState<string>('feed');
 
-    // Incrementing counter: PostCard listens to this to close its own tooltip on scroll.
-    // No need to track which card is open — each card manages that itself.
     const [scrollSignal, setScrollSignal] = useState(0);
     const onScrollBeginDrag = useCallback(() => setScrollSignal((n) => n + 1), []);
 
     const profile = useAuthStore((s) => s.profile);
     const setProfile = useAuthStore((s) => s.setProfile);
     const navigation = useNavigation<NavigationProps>();
-
-    // ─── API Helpers ────────────────────────────────────────────────────────────
 
     const handle_get_feed_posts = useCallback((query: string | null) => {
         setLoadingTrue();
@@ -112,9 +109,16 @@ export const useNestFeed = () => {
         });
     }, []);
 
-    const handleHidePost = useCallback((id: number) => {
-        setPosts((prev) => prev.filter((p) => p.id !== id));
-    }, []);
+    const handleHidePost = ((id: number) => {
+        hide_source(id, (res) => {
+            if(res){
+                const currentQuery = buildQuery(selectedFilters, selectedSort);
+                handle_get_feed_posts(currentQuery);
+            }
+            // setPosts((prev) => prev.filter((p) => p.id !== id));
+            
+        });
+    });
 
     const handleSort = useCallback((sortString: string) => {
         setSelectedSort(sortString);

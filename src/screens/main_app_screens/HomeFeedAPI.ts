@@ -96,4 +96,28 @@ export const feedback_post = async (post_id:number, cb:CALLBACK) => {
     }catch(e:any){
         cb(null)
     }
+
+}
+
+
+export const hide_source = async (post_id:number, cb:CALLBACK) => {
+    const url = `/api/feed/source/hide/`;
+    try{
+        const res = await api.post(url, {feed_item_id: post_id+""});
+        cb(res.data)
+    }catch(e:any){
+        console.log(e, "hide source error");
+        cb(null)
+    }
+}
+
+
+export const get_feed_details = async (post_id:number, cb:CALLBACK) => {
+    const url = `api/feed/item/${post_id}/`;
+    try{
+        const res = await api.get(url);
+        cb(res.data)
+    }catch(e:any){
+        cb(null)
+    }
 }

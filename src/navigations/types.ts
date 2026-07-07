@@ -37,4 +37,7 @@ export type MainStackParamList = {
     LiveScoreDetail: {
         matchId: string | number | null
     }
+    FeedContent: {
+        item_id: number | null
+    }
 }

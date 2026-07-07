@@ -2,6 +2,14 @@ import React, { memo, useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { Heart, Bookmark, MoreVertical } from 'lucide-react-native';
 import { Post } from '@/utils/main_app_types';
+import {useNavigation} from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MainStackParamList } from '@/navigations/types';
+import { get_feed_details } from '../HomeFeedAPI';
+
+type NavigationProps = StackNavigationProp<MainStackParamList>;
+
+
 
 const extractDateParts = (dateInput: string) => {
     const date = new Date(dateInput);
@@ -32,7 +40,7 @@ const PostCard = memo(({
     onBookmark,
 }: Props) => {
     const [tooltipOpen, setTooltipOpen] = useState(false);
-
+    const navigation = useNavigation<NavigationProps>();
     // Close tooltip whenever the parent signals a scroll event
     useEffect(() => {
         if (scrollSignal > 0) setTooltipOpen(false);
@@ -43,7 +51,9 @@ const PostCard = memo(({
             {/* Header Row */}
             <View className="flex-row items-start justify-between mb-3">
                 <View className="flex-row items-start flex-1">
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => {
+                        navigation.navigate('FeedContent', { item_id: item.id });
+                    }}>
                         {item.publisher_logo ? (
                             <Image
                                 source={{ uri: item.publisher_logo }}
@@ -118,9 +128,13 @@ const PostCard = memo(({
             <View className="flex-row items-center justify-between">
                 <View className="h-12 w-12" />
                 <View className="flex-1 ml-3">
-                    <Text className="text-white text-lg font-oswald-medium mb-2 leading-6">
+                    <TouchableOpacity onPress={() => {
+                         navigation.navigate('FeedContent', { item_id: item.id });
+                    }}>
+                        <Text className="text-white text-lg font-oswald-medium mb-2 leading-6">
                         {item.title}
                     </Text>
+                    </TouchableOpacity>
                     <Text className="text-white text-sm font-oswald-regular mb-4 leading-5">
                         {item.summary}
                     </Text>

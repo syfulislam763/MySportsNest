@@ -226,6 +226,7 @@ const TeamDetailScreen = () => {
     }, [searchQuery])
 
     const handle_add_source = async (item: SourceResult) => {
+        console.log('Adding source', JSON.stringify(item, null, 2));
         setItemLoading((prev) => ({ ...prev, [item.domain]: true }));
         try {                                                                                             
             const body = {
@@ -239,8 +240,7 @@ const TeamDetailScreen = () => {
             const newSourceId = res?.data?.source_id ?? res?.data?.id ?? item.source_id;
             setAddedSources((prev) => ({ ...prev, [item.domain]: newSourceId }));
         } catch (e) {
-            // handle silently
-
+            console.log('Failed to add source', JSON.stringify(e, null, 2));
         } finally {
             setItemLoading((prev) => ({ ...prev, [item.domain]: false }));
         }

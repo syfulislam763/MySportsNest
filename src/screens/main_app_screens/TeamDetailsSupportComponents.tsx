@@ -239,7 +239,7 @@ export const renderFeedContent = ({posts, handle_like, handle_feedback}: {posts:
                                     <View className="ml-3 flex-1">
                                         <View className="flex-row items-center flex-wrap">
                                             <Text className="text-white text-lg font-oswald-medium">{item.entity_names.length?item.entity_names[0]:""}</Text>
-                                            <Text className="text-white/60 text-sm font-oswald-regular ml-2">{"@name"}</Text>
+                                            <Text className="text-white/60 text-sm font-oswald-regular ml-2"></Text>
                                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">•</Text>
                                             <Text className="text-white/60 text-sm font-oswald-regular ml-1">{extractDateParts(item.published_at)}</Text>
                                         </View>
