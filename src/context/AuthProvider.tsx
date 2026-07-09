@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             try {
                 const data = JSON.parse(e.data);
 
-                //console.log("WebSocket message received:", JSON.stringify(data, null, 2));
+                console.log("WebSocket message received:", JSON.stringify(data, null, 2));
                 if (data.type === 'snapshot') {
                     setLiveScores(data.games ?? []);
                 } else if (data.type === 'update' && data.game) {

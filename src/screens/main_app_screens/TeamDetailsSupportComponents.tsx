@@ -246,7 +246,7 @@ export const renderFeedContent = ({posts, handle_like, handle_feedback}: {posts:
                                         <Text className="text-white/60 text-xs font-oswald-regular mt-1">{item.source_name}</Text>
                                     </View>
                                 </View>
-                                <MoreVertical size={24} color="white" />
+                                {/* <MoreVertical size={24} color="white" /> */}
                             </View>
                 
                             <View className='flex-row items-center justify-between'>
